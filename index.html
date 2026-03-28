@@ -206,6 +206,9 @@ function handleTap() {
 
 pic.addEventListener("click", handleTap);
 pic.addEventListener("touchstart", handleTap);
+  bg.addEventListener('error', (e) => console.log('Audio error:', e));
+creak.addEventListener('error', (e) => console.log('Audio error:', e));
+scream.addEventListener('error', (e) => console.log('Audio error:', e));
 </script>
 
 </body>
