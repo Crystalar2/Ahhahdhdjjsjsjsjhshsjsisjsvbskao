@@ -12,7 +12,6 @@ html, body {
   overflow: hidden;
 }
 
-/* ⚠️ TEXT */
 .warning-bg {
   position: fixed;
   bottom: 10%;
@@ -27,7 +26,6 @@ html, body {
   pointer-events: none;
 }
 
-/* 🪢 hanging picture */
 .pic {
   position: absolute;
   top: 0;
@@ -41,7 +39,6 @@ html, body {
   touch-action: manipulation;
 }
 
-/* 👁 jumpscare container */
 .target {
   position: fixed;
   top: 0;
@@ -55,31 +52,16 @@ html, body {
   z-index: 5;
 }
 
-/* 👁 image */
 #targetImg {
   width: 60vw;
   max-width: 300px;
   transform: scale(0);
 }
 
-/* 💀 jumpscare animation */
 @keyframes jumpscare {
-  0% { transform: scale(0); opacity: 1; filter: invert(0); }
+  0% { transform: scale(0); opacity: 1; }
   10% { transform: scale(5); }
-  20% { filter: invert(1); }
-  40% { filter: invert(0); }
-  60% { filter: invert(1); }
-  80% { filter: invert(0); }
   100% { transform: scale(5); opacity: 0; }
-}
-
-/* 📳 SCREEN SHAKE */
-@keyframes shake {
-  0% { transform: translate(0,0); }
-  25% { transform: translate(-10px,5px); }
-  50% { transform: translate(10px,-5px); }
-  75% { transform: translate(-5px,5px); }
-  100% { transform: translate(0,0); }
 }
 </style>
 </head>
@@ -94,9 +76,10 @@ html, body {
   <img src="aa.jpeg" id="targetImg">
 </div>
 
-<audio id="scream" src="aas.mp3"></audio>
+<!-- ✅ preload helps mobile -->
+<audio id="scream" src="aas.mp3" preload="auto"></audio>
 <audio id="creak" src="aa.mp3" preload="auto"></audio>
-<audio id="bg" src="bgaa.mp3" loop></audio>
+<audio id="bg" src="bgaa.mp3" preload="auto" loop></audio>
 
 <script>
 const pic = document.getElementById("pic");
@@ -111,10 +94,16 @@ let currentAngle = 0;
 let started = false;
 let clickCount = 0;
 
-/* 🔓 unlock audio */
+/* 🔥 VERY IMPORTANT: unlock audio properly */
 function unlockAudio() {
-  bg.volume = 0.5;
-  bg.play().catch(()=>{});
+  [bg, creak, scream].forEach(a => {
+    a.muted = true;
+    a.play().then(() => {
+      a.pause();
+      a.currentTime = 0;
+      a.muted = false;
+    }).catch(()=>{});
+  });
 }
 
 /* 🪢 swing */
@@ -135,14 +124,13 @@ function swing() {
   bg.play().catch(()=>{});
 
   creak.currentTime = 0;
-  creak.playbackRate = Math.random() * 0.4 + 0.8;
   creak.volume = 0.05;
   creak.play().catch(()=>{});
 
   setTimeout(swing, duration);
 }
 
-/* ▶ start (works everywhere) */
+/* ▶ start (MUST be user gesture) */
 function startExperience() {
   if (started) return;
   started = true;
@@ -160,24 +148,13 @@ pic.addEventListener("pointerdown", () => {
   if (clickCount === 3) {
     clickCount = 0;
 
-    /* 📳 VIBRATE */
-    if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 300]);
-    }
-
-    /* 📳 SHAKE */
-    document.body.style.animation = "shake 0.7s";
-    setTimeout(() => {
-      document.body.style.animation = "";
-    }, 700);
-
     creak.currentTime = 0;
     creak.volume = 0.3;
     creak.play().catch(()=>{});
 
     target.style.opacity = "1";
 
-    /* 🔥 restart animation */
+    /* force animation restart */
     targetImg.style.animation = "none";
     targetImg.offsetHeight;
     targetImg.style.animation = "jumpscare 0.7s linear";
