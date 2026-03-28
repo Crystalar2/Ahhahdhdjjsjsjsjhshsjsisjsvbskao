@@ -2,14 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
   html, body {
     margin: 0;
     height: 100%;
     background: black;
+    /* Prevents blue highlights and text selection */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
     overflow: hidden;
-    touch-action: none; /* Prevents accidental zooming/scrolling */
+    touch-action: none;
   }
 
   .warning-bg {
@@ -35,10 +39,11 @@
     width: 60vw;
     max-width: 300px;
     transform-origin: top center;
-    /* Apply the smooth animation here */
     animation: swing 2s ease-in-out infinite alternate;
     cursor: pointer;
     z-index: 5;
+    /* Extra insurance against blue boxes */
+    outline: none;
   }
 
   /* JUMPSCARE OVERLAY */
@@ -60,7 +65,7 @@
   #targetImg {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Makes the scare fill the screen */
+    object-fit: cover;
     transform: scale(0);
   }
 
@@ -84,10 +89,10 @@
 
 <div class="warning-bg">cấm ấn 3 lần</div>
 
-<img src="aa.png" class="pic" id="pic">
+<img src="aa.png" class="pic" id="pic" draggable="false">
 
 <div class="target" id="target">
-  <img src="aa.jpeg" id="targetImg">
+  <img src="aa.jpeg" id="targetImg" draggable="false">
 </div>
 
 <!-- Audio -->
@@ -106,39 +111,36 @@ const bg = document.getElementById("bg");
 let clickCount = 0;
 let started = false;
 
-// Function to handle the jumpscare
 function triggerJumpscare() {
-  // Play sound immediately
   scream.currentTime = 0;
-  scream.play().catch(e => console.log("Scream blocked:", e));
+  scream.play().catch(() => {});
 
-  // Trigger CSS animations
   target.classList.add("active-jumpscare");
   targetImg.classList.add("active-img");
 
-  // Reset after animation finishes
   setTimeout(() => {
     target.classList.remove("active-jumpscare");
     targetImg.classList.remove("active-img");
   }, 600);
 }
 
-// Global click listener to unlock audio
+// Global click listener to unlock audio context
 document.addEventListener('pointerdown', () => {
   if (!started) {
+    bg.volume = 0.5;
     bg.play().catch(() => {});
     started = true;
   }
-});
+}, { passive: false });
 
 pic.addEventListener("pointerdown", (e) => {
+  // e.preventDefault() stops the "blue flash" and context menus
   e.preventDefault();
   
   clickCount++;
   
-  // Play creak
   creak.currentTime = 0;
-  creak.volume = 0.5;
+  creak.volume = 0.4;
   creak.play().catch(() => {});
 
   if (clickCount >= 3) {
