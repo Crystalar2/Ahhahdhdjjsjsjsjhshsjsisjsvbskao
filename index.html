@@ -43,11 +43,10 @@ html, body {
   transition: transform 1.5s ease-in-out;
 
   z-index: 2;
-
   touch-action: manipulation;
 }
 
-/* 👁 fullscreen center */
+/* 👁 fullscreen */
 .target {
   position: fixed;
   top: 0;
@@ -109,6 +108,7 @@ html, body {
 const pic = document.getElementById("pic");
 const target = document.getElementById("target");
 const targetImg = document.getElementById("targetImg");
+
 const creak = document.getElementById("creak");
 const scream = document.getElementById("scream");
 const bg = document.getElementById("bg");
@@ -129,15 +129,15 @@ function unlockAudio() {
   });
 }
 
-/* 🪢 swing */
+/* 🪢 update rotation */
 function updatePic() {
   pic.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
 }
 
+/* 🪢 swing logic (FIXED AUDIO) */
 function swing() {
   const angle = Math.random() * 34 + 1;
   direction *= -1;
-
   currentAngle = angle * direction;
 
   const duration = Math.random() * 1500 + 1000;
@@ -145,17 +145,24 @@ function swing() {
 
   updatePic();
 
-  bg.play().catch(()=>{});
+  // ✅ play bg ONLY once
+  if (bg.paused) {
+    bg.volume = 0.2;
+    bg.play().catch(()=>{});
+  }
 
-  creak.currentTime = 0;
-  creak.playbackRate = Math.random() * 0.4 + 0.8;
-  creak.volume = 0.05;
-  creak.play().catch(()=>{});
+  // ✅ prevent creak overlap
+  if (creak.paused) {
+    creak.currentTime = 0;
+    creak.playbackRate = Math.random() * 0.4 + 0.8;
+    creak.volume = Math.random() * 0.1 + 0.05;
+    creak.play().catch(()=>{});
+  }
 
   setTimeout(swing, duration);
 }
 
-/* ▶ start (works on mobile + pc) */
+/* ▶ start */
 function startExperience() {
   if (started) return;
   started = true;
@@ -176,21 +183,27 @@ function handleTap() {
   if (clickCount === 3) {
     clickCount = 0;
 
-    creak.currentTime = 0;
-    creak.volume = 0.3;
-    creak.play().catch(()=>{});
+    // 💀 stop background for effect
+    bg.pause();
+
+    // 💀 play scream clean
+    scream.currentTime = 0;
+    scream.volume = 1;
+    scream.play().catch(()=>{});
 
     target.classList.add("active");
     target.style.opacity = "1";
 
     targetImg.style.animation = "jumpscare 0.7s linear";
-    scream.play().catch(()=>{});
 
     setTimeout(() => {
       target.style.opacity = "0";
       target.classList.remove("active");
       targetImg.style.animation = "";
       targetImg.style.transform = "scale(0)";
+
+      // resume bg after scare
+      bg.play().catch(()=>{});
     }, 700);
   }
 }
