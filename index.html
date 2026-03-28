@@ -11,17 +11,7 @@ html, body {
   overflow: hidden;
 }
 
-/* BACKGROUND LAYER (this will be inverted ONLY) */
-#bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-/* HANGING IMAGE (NOT AFFECTED BY INVERT) */
+/* HANGING IMAGE (NOT AFFECTED) */
 #img {
   width: 200px;
   margin-top: 10px;
@@ -30,7 +20,7 @@ html, body {
   transform: rotate(0deg);
 
   position: relative;
-  z-index: 10;
+  z-index: 2;
 }
 
 /* JUMPSCARE IMAGE */
@@ -45,6 +35,9 @@ html, body {
   opacity: 0;
   pointer-events: none;
   z-index: 999;
+
+  /* smooth effect */
+  transition: filter 0.05s ease-in-out;
 }
 </style>
 
@@ -52,10 +45,7 @@ html, body {
 
 <body>
 
-<!-- BACKGROUND LAYER -->
-<div id="bg"></div>
-
-<div style="position:fixed; width:100%; display:flex; justify-content:center; z-index:10;">
+<div style="position:fixed; width:100%; display:flex; justify-content:center;">
   <img id="img" src="aa.png">
 </div>
 
@@ -66,8 +56,6 @@ html, body {
 <audio id="scareAudio" src="aas.mp3"></audio>
 
 <script>
-let bg = document.getElementById("bg");
-
 let img = document.getElementById("img");
 let scareImg = document.getElementById("scareImg");
 
@@ -92,7 +80,7 @@ img.addEventListener("click", () => {
 /* TRIGGER */
 document.addEventListener("click", () => {
   if (!started || isScaring) return;
-  triggerInvert();
+  triggerScare();
 });
 
 /* ROTATE */
@@ -117,8 +105,8 @@ function rotateLoop() {
   }, 2000);
 }
 
-/* ONLY BACKGROUND INVERTS */
-function triggerInvert() {
+/* ONLY aa.jpeg EFFECT */
+function triggerScare() {
   isScaring = true;
 
   let flashes = 10;
@@ -127,23 +115,24 @@ function triggerInvert() {
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
+  scareImg.style.opacity = 1;
+
   let interval = setInterval(() => {
     if (i >= flashes) {
       clearInterval(interval);
 
-      bg.style.filter = "none";
       scareImg.style.opacity = 0;
+      scareImg.style.filter = "none";
 
       isScaring = false;
       return;
     }
 
     if (i % 2 === 0) {
-      bg.style.filter = "invert(1) contrast(2)";
-      scareImg.style.opacity = 1;
+      // ONLY THE JUMPSCARE IMAGE INVERTS
+      scareImg.style.filter = "invert(1) contrast(2)";
     } else {
-      bg.style.filter = "none";
-      scareImg.style.opacity = 0;
+      scareImg.style.filter = "none";
     }
 
     i++;
