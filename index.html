@@ -41,12 +41,12 @@ html, body {
 /* VIOLENT SHAKE + INVERT(100%) FOR aa.jpeg */
 @keyframes violentScare {
   0%   { transform: translate(0, 0) scale(1); filter: invert(0%); }
-  10%  { transform: translate(-15px, -8px) scale(1.3); filter: invert(100%) contrast(500%); }
-  25%  { transform: translate(15px, 9px) scale(1.1); filter: invert(0%); }
-  40%  { transform: translate(-18px, 12px) scale(1.5); filter: invert(100%) contrast(1000%); }
-  55%  { transform: translate(18px, -14px) scale(1.2); filter: invert(0%); }
-  75%  { transform: translate(-16px, 6px) scale(1.6); filter: invert(100%) contrast(600%); }
-  90%  { transform: translate(10px, -10px) scale(1.2); filter: invert(0%); }
+  10%  { transform: translate(-150px, -80px) scale(1.3); filter: invert(100%) contrast(500%); }
+  25%  { transform: translate(150px, 90px) scale(1.1); filter: invert(0%); }
+  40%  { transform: translate(-180px, 120px) scale(1.5); filter: invert(100%) contrast(1000%); }
+  55%  { transform: translate(180px, -140px) scale(1.2); filter: invert(0%); }
+  75%  { transform: translate(-160px, 60px) scale(1.6); filter: invert(100%) contrast(600%); }
+  90%  { transform: translate(100px, -100px) scale(1.2); filter: invert(0%); }
   100% { transform: translate(0, 0) scale(1); filter: invert(0%); }
 }
 
@@ -82,8 +82,8 @@ let isScaring = false;
 
 // 1. Initialize MotionBlurJS on aa.jpeg ONLY
 const mb = new MotionBlur(scareImg, {
-  intensity: 4, // Cranked up for extra motion blur
-  pulse: 0.2    // High pulse for stuttering effect
+  intensity: 8, // Cranked up for extra motion blur
+  pulse: 0.9    // High pulse for stuttering effect
 });
 
 rotateAudio.volume = 0.2;
