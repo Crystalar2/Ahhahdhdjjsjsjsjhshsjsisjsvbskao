@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 html, body {
   margin: 0;
@@ -11,7 +12,7 @@ html, body {
   transition: filter 0.05s ease-in-out;
 }
 
-/* CENTER */
+/* CENTER WRAP */
 #wrap {
   position: fixed;
   top: 0;
@@ -24,29 +25,33 @@ html, body {
   align-items: flex-start;
 }
 
-/* NORMAL IMAGE */
+/* HANGING IMAGE */
 #img {
   width: 200px;
   margin-top: 10px;
 
   transform-origin: top center;
   transform: rotate(0deg);
+
+  position: relative;
+  z-index: 1;
 }
 
-/* JUMPSCARE IMAGE (hidden by default) */
+/* JUMPSCARE IMAGE */
 #scareImg {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-
   object-fit: cover;
 
   opacity: 0;
   pointer-events: none;
+  z-index: 999;
 }
 </style>
+
 </head>
 
 <body>
@@ -83,13 +88,13 @@ img.addEventListener("click", () => {
   }
 });
 
-/* TRIGGER */
+/* TRIGGER EVERY CLICK */
 document.addEventListener("click", () => {
   if (!started || isScaring) return;
   triggerInvert();
 });
 
-/* SWING */
+/* ROTATION */
 function rotateLoop() {
   let angle = Math.random() * 35;
 
@@ -111,7 +116,7 @@ function rotateLoop() {
   }, 2000);
 }
 
-/* SCARY EFFECT */
+/* INVERT + JUMPSCARE */
 function triggerInvert() {
   isScaring = true;
 
@@ -124,18 +129,20 @@ function triggerInvert() {
   let interval = setInterval(() => {
     if (i >= flashes) {
       clearInterval(interval);
+
       document.body.style.filter = "none";
       scareImg.style.opacity = 0;
+
       isScaring = false;
       return;
     }
 
     if (i % 2 === 0) {
       document.body.style.filter = "invert(1) contrast(2)";
-      scareImg.style.opacity = 1;   // SHOW JUMPSCARE
+      scareImg.style.opacity = 1;
     } else {
       document.body.style.filter = "none";
-      scareImg.style.opacity = 0;   // HIDE
+      scareImg.style.opacity = 0;
     }
 
     i++;
