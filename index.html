@@ -10,7 +10,7 @@ html, body {
   overflow: hidden;
 }
 
-/* FULLSCREEN WRAPPER (no more cropping) */
+/* FULLSCREEN WRAPPER */
 #wrap {
   position: fixed;
   top: 0;
@@ -19,11 +19,11 @@ html, body {
   height: 100vh;
 
   display: flex;
-  justify-content: center;   /* center horizontally */
-  align-items: flex-start;   /* stick to top */
+  justify-content: center;
+  align-items: flex-start;
 }
 
-/* IMAGE */
+/* MAIN IMAGE */
 #img {
   width: 200px;
   margin-top: 10px;
@@ -33,9 +33,24 @@ html, body {
 
   display: block;
 
-  /* anti-glitch */
   will-change: transform;
   backface-visibility: hidden;
+}
+
+/* FLASH IMAGE */
+#flashImg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
+
+  transition: opacity 0.05s;
 }
 </style>
 </head>
@@ -46,6 +61,9 @@ html, body {
   <img id="img" src="aa.png">
 </div>
 
+<!-- FLASH IMAGE -->
+<img id="flashImg" src="aa.jpeg">
+
 <audio id="bgAudio" src="bgaa.mp3" loop></audio>
 <audio id="rotateAudio" src="aa.mp3"></audio>
 
@@ -53,22 +71,30 @@ html, body {
 let img = document.getElementById("img");
 let bgAudio = document.getElementById("bgAudio");
 let rotateAudio = document.getElementById("rotateAudio");
+let flashImg = document.getElementById("flashImg");
 
 let started = false;
+let clickCount = 0;
 
-// 🔊 softer creak sound
+// 🔊 softer creak
 rotateAudio.volume = 0.2;
 
-// 🎯 FIRST CLICK
+// 🎯 FIRST CLICK (start game)
 img.addEventListener("click", () => {
   if (!started) {
     started = true;
-
-    // play background (loops)
     bgAudio.play().catch(()=>{});
-
-    // start swinging
     rotateLoop();
+  }
+});
+
+// 🖱️ CLICK ANYWHERE → COUNT TO 3
+document.addEventListener("click", () => {
+  clickCount++;
+
+  if (clickCount === 3) {
+    triggerFlash();
+    clickCount = 0; // reset
   }
 });
 
@@ -79,7 +105,6 @@ function rotateLoop() {
 
   img.style.transition = "transform 2s ease-in-out";
 
-  // LEFT
   img.style.transform = `rotate(-${angle}deg)`;
 
   rotateAudio.currentTime = 0;
@@ -88,7 +113,6 @@ function rotateLoop() {
   setTimeout(() => {
     let angle2 = Math.random() * 35;
 
-    // RIGHT
     img.style.transform = `rotate(${angle2}deg)`;
 
     rotateAudio.currentTime = 0;
@@ -96,6 +120,33 @@ function rotateLoop() {
 
     setTimeout(rotateLoop, 2000);
   }, 2000);
+}
+
+
+// ⚡ FLASH + INVERT EFFECT
+function triggerFlash() {
+  let flashes = 6;
+  let i = 0;
+
+  let interval = setInterval(() => {
+    if (i >= flashes) {
+      clearInterval(interval);
+
+      flashImg.style.opacity = 0;
+      document.body.style.filter = "none";
+      return;
+    }
+
+    if (i % 2 === 0) {
+      flashImg.style.opacity = 1;
+      document.body.style.filter = "invert(1)";
+    } else {
+      flashImg.style.opacity = 0;
+      document.body.style.filter = "none";
+    }
+
+    i++;
+  }, 100);
 }
 </script>
 
