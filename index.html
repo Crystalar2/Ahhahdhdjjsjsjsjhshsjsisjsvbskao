@@ -8,7 +8,6 @@ html, body {
   padding: 0;
   background: black;
   overflow: hidden;
-  transition: filter 0.03s ease-in-out; /* Sharper transition */
 }
 
 #wrap {
@@ -23,13 +22,27 @@ html, body {
 }
 
 #img {
-  width: 250px; /* Made slightly larger for more impact */
+  width: 200px;
   margin-top: 10px;
   transform-origin: top center;
-  transform: rotate(0deg);
+  transform: rotate(0deg) scale(1);
   display: block;
   will-change: transform;
-  backface-visibility: hidden;
+  /* Smooth for the swing, but we will override this for the scare */
+  transition: transform 2s ease-in-out; 
+}
+
+/* This class will make the image shake violently during the scare */
+.shake {
+  animation: shake 0.1s infinite;
+}
+
+@keyframes shake {
+  0% { margin-left: 0px; }
+  25% { margin-left: 10px; margin-top: 5px; }
+  50% { margin-left: -10px; margin-top: 15px; }
+  75% { margin-left: 5px; margin-top: -5px; }
+  100% { margin-left: 0px; }
 }
 </style>
 </head>
@@ -55,7 +68,9 @@ let isScaring = false;
 
 rotateAudio.volume = 0.2;
 
-img.addEventListener("click", () => {
+// START EVERYTHING
+img.addEventListener("click", (e) => {
+  e.stopPropagation(); // Prevents double-triggering
   if (!started) {
     started = true;
     bgAudio.play().catch(()=>{});
@@ -63,62 +78,53 @@ img.addEventListener("click", () => {
   }
 });
 
+// REPEATABLE JUMPSCARE ON CLICK
 document.addEventListener("click", () => {
   if (!started || isScaring) return;
-  triggerInvert();
+  triggerScare();
 });
 
 function rotateLoop() {
-  let angle = Math.random() * 40;
+  if (isScaring) return; // Stop swinging while scaring
+  
+  let angle = (Math.random() * 30) - 15;
   img.style.transition = "transform 2s ease-in-out";
-  img.style.transform = `rotate(-${angle}deg)`;
+  img.style.transform = `rotate(${angle}deg) scale(1)`;
 
   rotateAudio.currentTime = 0;
   rotateAudio.play().catch(()=>{});
 
   setTimeout(() => {
-    let angle2 = Math.random() * 40;
-    img.style.transform = `rotate(${angle2}deg)`;
-    rotateAudio.currentTime = 0;
-    rotateAudio.play().catch(()=>{});
-
-    setTimeout(rotateLoop, 2000);
+    if (!isScaring) rotateLoop();
   }, 2000);
 }
 
-function triggerInvert() {
+function triggerScare() {
   isScaring = true;
   
-  // --- SETTINGS ---
-  let flashes = 30; // 3x longer than before (approx 2-3 seconds of chaos)
-  let i = 0;
-
+  // 1. Play Sound
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
-  let interval = setInterval(() => {
-    if (i >= flashes) {
-      clearInterval(interval);
-      document.body.style.filter = "none";
-      // Small cooldown before they can click again
-      setTimeout(() => { isScaring = false; }, 500); 
-      return;
-    }
+  // 2. Visual Scare: Zoom in and Shake
+  img.style.transition = "transform 0.05s linear"; // Instant zoom
+  img.style.transform = "scale(4) translateY(50px)"; // Big zoom
+  img.classList.add("shake");
 
-    // SCARY MODES
-    if (i % 2 === 0) {
-      // Deep-fried demonic look
-      document.body.style.filter = "invert(1) contrast(1000%) saturate(50) hue-rotate(270deg) brightness(1.5)";
-    } else if (i % 3 === 0) {
-      // Blood red / High Exposure look
-      document.body.style.filter = "invert(0.5) sepia(1) saturate(20) hue-rotate(0deg) brightness(2)";
-    } else {
-      // Pure Negative
-      document.body.style.filter = "invert(1) brightness(5)";
-    }
-
-    i++;
-  }, 70); // Slightly slower than 60ms makes the "longer" effect feel more agonizing
+  // 3. Duration of the scare (3 seconds)
+  setTimeout(() => {
+    // Reset back to normal
+    img.classList.remove("shake");
+    img.style.transition = "transform 0.5s ease-out";
+    img.style.transform = "scale(1) rotate(0deg)";
+    
+    // Allow clicking again after a short cooldown
+    setTimeout(() => {
+      isScaring = false;
+      rotateLoop(); // Restart the swinging
+    }, 500);
+    
+  }, 3000); 
 }
 </script>
 
