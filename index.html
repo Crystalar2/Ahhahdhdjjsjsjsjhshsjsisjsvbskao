@@ -12,7 +12,6 @@ html, body {
   overflow: hidden;
 }
 
-/* ⚠️ BACKGROUND WARNING TEXT */
 .warning-bg {
   position: fixed;
   bottom: 10%;
@@ -22,13 +21,9 @@ html, body {
   color: gray;
   opacity: 0.25;
   letter-spacing: 3px;
-  font-family: Arial, sans-serif;
   font-weight: bold;
-  z-index: 0;
-  pointer-events: none;
 }
 
-/* 🪢 hanging picture */
 .pic {
   position: absolute;
   top: 0;
@@ -38,45 +33,27 @@ html, body {
   transform-origin: 50% 0%;
   transform: translateX(-50%);
   transition: transform 1.5s ease-in-out;
-  z-index: 2;
-  touch-action: manipulation;
 }
 
-/* 👁 fullscreen */
 .target {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   opacity: 0;
-  pointer-events: none;
-  z-index: 5;
 }
 
-.target.active {
-  pointer-events: auto;
-}
-
-/* 👁 jumpscare image */
 #targetImg {
   width: 60vw;
   max-width: 300px;
-  transform: scale(0);
-  opacity: 0;
 }
 
-/* 💀 jumpscare animation */
 @keyframes jumpscare {
-  0% { transform: scale(0); opacity: 1; filter: invert(0); }
-  10% { transform: scale(5); }
-  20% { filter: invert(1); }
-  40% { filter: invert(0); }
-  60% { filter: invert(1); }
-  80% { filter: invert(0); }
+  0% { transform: scale(0); }
   100% { transform: scale(5); opacity: 0; }
 }
 </style>
@@ -85,32 +62,49 @@ html, body {
 <body>
 
 <div class="warning-bg">cấm ấn 3 lần</div>
-
 <img src="aa.png" class="pic" id="pic">
 
 <div class="target" id="target">
   <img src="aa.jpeg" id="targetImg">
 </div>
 
-<!-- 🔊 AUDIO (playsinline FIX) -->
-<audio id="scream" src="aas.mp3" playsinline></audio>
-<audio id="creak" src="aa.mp3" preload="auto" playsinline></audio>
-<audio id="bg" src="bgaa.mp3" loop playsinline></audio>
-
 <script>
 const pic = document.getElementById("pic");
 const target = document.getElementById("target");
 const targetImg = document.getElementById("targetImg");
 
-const creak = document.getElementById("creak");
-const scream = document.getElementById("scream");
-const bg = document.getElementById("bg");
+let audioCtx;
+let buffers = {};
 
+let started = false;
 let direction = 1;
 let currentAngle = 0;
-let started = false;
 
-/* 🪢 update rotation */
+/* 🔥 LOAD AUDIO */
+async function loadSound(name, url) {
+  const res = await fetch(url);
+  const arrayBuffer = await res.arrayBuffer();
+  buffers[name] = await audioCtx.decodeAudioData(arrayBuffer);
+}
+
+/* 🔥 PLAY SOUND */
+function playSound(name, volume = 1, loop = false) {
+  const source = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+
+  source.buffer = buffers[name];
+  source.loop = loop;
+
+  gain.gain.value = volume;
+
+  source.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  source.start(0);
+  return source;
+}
+
+/* 🪢 update */
 function updatePic() {
   pic.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
 }
@@ -126,43 +120,31 @@ function swing() {
 
   updatePic();
 
-  // play bg once
-  if (bg.paused) {
-    bg.volume = 0.2;
-    bg.play().catch(()=>{});
-  }
-
-  // play creak safely
-  if (creak.paused) {
-    creak.currentTime = 0;
-    creak.playbackRate = Math.random() * 0.4 + 0.8;
-    creak.volume = Math.random() * 0.1 + 0.05;
-    creak.play().catch(()=>{});
-  }
+  // creak sound
+  playSound("creak", Math.random() * 0.1 + 0.05);
 
   setTimeout(swing, duration);
 }
 
-/* ▶ START (CRITICAL FIX) */
-function startExperience() {
+/* ▶ START */
+async function startExperience() {
   if (started) return;
   started = true;
 
-  // 🔥 force unlock audio HERE
-  bg.volume = 0.2;
-  bg.play().catch(()=>{});
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  creak.volume = 0;
-  creak.play().then(()=>{
-    creak.pause();
-    creak.currentTime = 0;
-  }).catch(()=>{});
+  // 🔥 MUST resume on user gesture
+  await audioCtx.resume();
 
-  scream.volume = 0;
-  scream.play().then(()=>{
-    scream.pause();
-    scream.currentTime = 0;
-  }).catch(()=>{});
+  // load all sounds
+  await Promise.all([
+    loadSound("bg", "bgaa.mp3"),
+    loadSound("creak", "aa.mp3"),
+    loadSound("scream", "aas.mp3")
+  ]);
+
+  // start bg loop
+  playSound("bg", 0.2, true);
 
   swing();
 }
@@ -179,36 +161,20 @@ function handleTap() {
   if (clickCount === 3) {
     clickCount = 0;
 
-    // stop bg
-    bg.pause();
+    playSound("scream", 1);
 
-    // play scream clean
-    scream.currentTime = 0;
-    scream.volume = 1;
-    scream.play().catch(()=>{});
-
-    target.classList.add("active");
     target.style.opacity = "1";
-
     targetImg.style.animation = "jumpscare 0.7s linear";
 
     setTimeout(() => {
       target.style.opacity = "0";
-      target.classList.remove("active");
       targetImg.style.animation = "";
-      targetImg.style.transform = "scale(0)";
-
-      // resume bg
-      bg.play().catch(()=>{});
     }, 700);
   }
 }
 
 pic.addEventListener("click", handleTap);
 pic.addEventListener("touchstart", handleTap);
-  bg.addEventListener('error', (e) => console.log('Audio error:', e));
-creak.addEventListener('error', (e) => console.log('Audio error:', e));
-scream.addEventListener('error', (e) => console.log('Audio error:', e));
 </script>
 
 </body>
