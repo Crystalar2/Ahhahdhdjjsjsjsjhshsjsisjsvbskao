@@ -29,26 +29,23 @@ html, body {
   max-height: 100%;
   display: none;
   transform-origin: center;
-  will-change: transform;
-  z-index: 5;
 }
 
-/* 🔥 VIOLENT SHAKE + MOTION BLUR */
-@keyframes violentShake {
-  0%   { transform: translate(0,0) rotate(0deg);   filter: blur(0px); }
-  10%  { transform: translate(-20px, 12px) rotate(-6deg); filter: blur(1px); }
-  20%  { transform: translate(20px, -12px) rotate(6deg); filter: blur(2px); }
-  30%  { transform: translate(-25px, 15px) rotate(-8deg); filter: blur(3px); }
-  40%  { transform: translate(25px, -15px) rotate(8deg); filter: blur(3px); }
-  50%  { transform: translate(-15px, 10px) rotate(-5deg); filter: blur(2px); }
-  60%  { transform: translate(15px, -10px) rotate(5deg); filter: blur(2px); }
-  70%  { transform: translate(-10px, 6px) rotate(-3deg); filter: blur(1px); }
-  80%  { transform: translate(10px, -6px) rotate(3deg); filter: blur(1px); }
-  100% { transform: translate(0,0) rotate(0deg); filter: blur(0px); }
+/* SHAKE FIXED */
+@keyframes shake {
+  0% { transform: translate(15px, 20px) rotate(0deg); }
+  25% { transform: translate(-9px, 13px) rotate(-2deg); }
+  50% { transform: translate(20px, -12px) rotate(2deg); }
+  75% { transform: translate(-25px, -30px) rotate(-1deg); }
+  100% { transform: translate(9px, 0px) rotate(0deg); }
 }
 
 .shake {
-  animation: violentShake 0.12s infinite;
+  animation: shake 0.08s infinite;
+}
+
+.invert {
+  filter: invert(1);
 }
 </style>
 </head>
@@ -67,22 +64,17 @@ const img = document.getElementById("scareImg");
 const sound = document.getElementById("sound");
 
 btn.onclick = () => {
-
-  // show image
   img.style.display = "block";
 
-  // restart sound every click
   sound.currentTime = 0;
   sound.play();
 
-  // reset animation (so it retriggers every time)
-  img.classList.remove("shake");
-  void img.offsetWidth; // force reflow trick
   img.classList.add("shake");
+  img.classList.add("invert");
 
-  // hide after scare
   setTimeout(() => {
     img.classList.remove("shake");
+    img.classList.remove("invert");
     img.style.display = "none";
   }, 1500);
 };
