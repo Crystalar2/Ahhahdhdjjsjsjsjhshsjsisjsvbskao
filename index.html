@@ -10,21 +10,36 @@ html, body {
   overflow: hidden;
 }
 
-/* IMAGE AT TOP CENTER */
-#img {
+/* WRAPPER (fix glitch line) */
+#wrap {
   position: absolute;
   top: 0;
   left: 50%;
-  transform-origin: top center;
-  transform: translateX(-50%) rotate(0deg);
+  transform: translateX(-50%);
+  overflow: hidden;
+}
+
+/* IMAGE */
+#img {
+  display: block;
   width: 200px;
+
+  transform-origin: top center;
+  transform: rotate(0deg);
+
+  /* 🔥 anti-glitch fixes */
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 </style>
 </head>
 
 <body>
 
-<img id="img" src="aa.png">
+<div id="wrap">
+  <img id="img" src="aa.png">
+</div>
 
 <audio id="bgAudio" src="bgaa.mp3" loop></audio>
 <audio id="rotateAudio" src="aa.mp3"></audio>
@@ -36,28 +51,31 @@ let rotateAudio = document.getElementById("rotateAudio");
 
 let started = false;
 
-// 🔊 set creak volume LOWER
-rotateAudio.volume = 0.2; // change 0.0 → 1.0 if you want
+// 🔊 softer creak sound
+rotateAudio.volume = 0.2;
 
 // 🎯 FIRST CLICK
 img.addEventListener("click", () => {
   if (!started) {
     started = true;
 
+    // unlock + play bg audio
     bgAudio.play().catch(()=>{});
+
+    // start swinging
     rotateLoop();
   }
 });
 
 
-// 🔄 ROTATION LOOP
+// 🔄 ROTATION LOOP (smooth swing)
 function rotateLoop() {
   let angle = Math.random() * 35;
 
   img.style.transition = "transform 2s ease-in-out";
 
   // LEFT
-  img.style.transform = `translateX(-50%) rotate(-${angle}deg)`;
+  img.style.transform = `rotate(-${angle}deg)`;
 
   rotateAudio.currentTime = 0;
   rotateAudio.play().catch(()=>{});
@@ -66,7 +84,7 @@ function rotateLoop() {
     let angle2 = Math.random() * 35;
 
     // RIGHT
-    img.style.transform = `translateX(-50%) rotate(${angle2}deg)`;
+    img.style.transform = `rotate(${angle2}deg)`;
 
     rotateAudio.currentTime = 0;
     rotateAudio.play().catch(()=>{});
