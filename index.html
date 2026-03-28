@@ -2,6 +2,8 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- MotionBlurJS Library -->
+<script src="https://cdn.jsdelivr.net/gh/Adir-SL/MotionBlurJS@main/motionblur.js"></script>
 
 <style>
 html, body {
@@ -11,17 +13,17 @@ html, body {
   overflow: hidden;
 }
 
-/* HANGING IMAGE */
+/* HANGING IMAGE - STAYS CLEAN */
 #img {
   width: 200px;
   margin-top: 10px;
   transform-origin: top center;
-  transform: rotate(0deg);
   position: relative;
   z-index: 2;
+  transition: transform 2s ease-in-out;
 }
 
-/* JUMPSCARE IMAGE */
+/* JUMPSCARE IMAGE - THE TARGET FOR ALL EFFECTS */
 #scareImg {
   position: fixed;
   top: 0;
@@ -32,29 +34,27 @@ html, body {
   opacity: 0;
   pointer-events: none;
   z-index: 999;
+  /* Ensure the filter transition is fast for the invert strobe */
+  transition: opacity 0.1s;
 }
 
-/* EXTREME VIOLENT SHAKE + 100% INVERT + MOTION BLUR */
+/* VIOLENT SHAKE + INVERT(100%) FOR aa.jpeg */
 @keyframes violentScare {
-  0%   { transform: translate(0, 0) scale(1); filter: invert(0%) blur(0px); }
-  10%  { transform: translate(-100px, -50px) scale(1.2); filter: invert(100%) contrast(500%) blur(10px); }
-  20%  { transform: translate(120px, 80px) scale(1.1); filter: invert(0%) blur(2px); }
-  30%  { transform: translate(-150px, 100px) scale(1.4); filter: invert(100%) contrast(800%) blur(20px); }
-  40%  { transform: translate(140px, -120px) scale(1.2); filter: invert(0%) blur(5px); }
-  50%  { transform: translate(-130px, 40px) scale(1.5); filter: invert(100%) contrast(500%) blur(25px); }
-  60%  { transform: translate(150px, -60px) scale(1.3); filter: invert(0%) blur(3px); }
-  70%  { transform: translate(-110px, 120px) scale(1.4); filter: invert(100%) contrast(900%) blur(15px); }
-  80%  { transform: translate(90px, -90px) scale(1.2); filter: invert(0%) blur(8px); }
-  90%  { transform: translate(-40px, 110px) scale(1.35); filter: invert(100%) contrast(500%) blur(12px); }
-  100% { transform: translate(0, 0) scale(1); filter: invert(0%) blur(0px); }
+  0%   { transform: translate(0, 0) scale(1); filter: invert(0%); }
+  10%  { transform: translate(-150px, -80px) scale(1.3); filter: invert(100%) contrast(500%); }
+  25%  { transform: translate(150px, 90px) scale(1.1); filter: invert(0%); }
+  40%  { transform: translate(-180px, 120px) scale(1.5); filter: invert(100%) contrast(1000%); }
+  55%  { transform: translate(180px, -140px) scale(1.2); filter: invert(0%); }
+  75%  { transform: translate(-160px, 60px) scale(1.6); filter: invert(100%) contrast(600%); }
+  90%  { transform: translate(100px, -100px) scale(1.2); filter: invert(0%); }
+  100% { transform: translate(0, 0) scale(1); filter: invert(0%); }
 }
 
-.scare-active {
-  /* Ultra fast cycle for that "glitch" look */
-  animation: violentScare 0.07s infinite;
+/* This class triggers the CSS side of the chaos */
+.aa-scare-effect {
+  animation: violentScare 0.05s infinite !important;
 }
 </style>
-
 </head>
 
 <body>
@@ -63,6 +63,7 @@ html, body {
   <img id="img" src="aa.png">
 </div>
 
+<!-- This is the image that gets shaken, blurred, and inverted -->
 <img id="scareImg" src="aa.jpeg">
 
 <audio id="bgAudio" src="bgaa.mp3" loop></audio>
@@ -70,19 +71,24 @@ html, body {
 <audio id="scareAudio" src="aas.mp3"></audio>
 
 <script>
-let img = document.getElementById("img");
-let scareImg = document.getElementById("scareImg");
-
-let bgAudio = document.getElementById("bgAudio");
-let rotateAudio = document.getElementById("rotateAudio");
-let scareAudio = document.getElementById("scareAudio");
+const img = document.getElementById("img");
+const scareImg = document.getElementById("scareImg");
+const bgAudio = document.getElementById("bgAudio");
+const rotateAudio = document.getElementById("rotateAudio");
+const scareAudio = document.getElementById("scareAudio");
 
 let started = false;
 let isScaring = false;
 
+// 1. Initialize MotionBlurJS on aa.jpeg ONLY
+const mb = new MotionBlur(scareImg, {
+  intensity: 8, // Cranked up for extra motion blur
+  pulse: 0.9    // High pulse for stuttering effect
+});
+
 rotateAudio.volume = 0.2;
 
-/* START */
+/* INITIAL CLICK TO START SWING */
 img.addEventListener("click", (e) => {
   e.stopPropagation();
   if (!started) {
@@ -92,7 +98,7 @@ img.addEventListener("click", (e) => {
   }
 });
 
-/* TRIGGER ON EVERY CLICK */
+/* CLICK ANYWHERE TO TRIGGER aa.jpeg CHAOS */
 document.addEventListener("click", () => {
   if (!started || isScaring) return;
   triggerScare();
@@ -101,36 +107,43 @@ document.addEventListener("click", () => {
 function rotateLoop() {
   if (isScaring) return;
   let angle = Math.random() * 40;
-  img.style.transition = "transform 2s ease-in-out";
   img.style.transform = `rotate(${Math.random() > 0.5 ? -angle : angle}deg)`;
 
   rotateAudio.currentTime = 0;
   rotateAudio.play().catch(()=>{});
 
   setTimeout(() => {
-    if (!isScaring) rotateLoop();
+    if (started && !isScaring) rotateLoop();
   }, 2000);
 }
 
 function triggerScare() {
   isScaring = true;
 
+  // Sound reset
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
-  scareImg.style.opacity = "1";
-  scareImg.classList.add("scare-active");
+  // Start MotionBlurJS on aa.jpeg
+  mb.start();
 
-  // Keep the chaos going for 2 seconds
+  // Apply Shake and Invert via CSS class
+  scareImg.style.opacity = "1";
+  scareImg.classList.add("aa-scare-effect");
+
+  // Chaos duration (3 seconds for a long scare)
   setTimeout(() => {
+    // Kill the effects
+    mb.stop();
     scareImg.style.opacity = "0";
-    scareImg.classList.remove("scare-active");
+    scareImg.classList.remove("aa-scare-effect");
     
+    // Cooldown
     setTimeout(() => {
       isScaring = false;
-      rotateLoop(); 
-    }, 400);
-  }, 2000);
+      rotateLoop(); // Go back to normal swing
+    }, 500);
+  }, 3000);
 }
 </script>
 
