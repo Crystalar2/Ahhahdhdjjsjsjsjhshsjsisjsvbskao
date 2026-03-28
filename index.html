@@ -8,31 +8,26 @@ html, body {
   padding: 0;
   background: black;
   overflow: hidden;
+  transition: filter 0.03s ease-in-out; /* Sharper transition */
 }
 
-/* FULLSCREEN WRAPPER */
 #wrap {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-
   display: flex;
   justify-content: center;
   align-items: flex-start;
 }
 
-/* MAIN IMAGE */
 #img {
-  width: 200px;
+  width: 250px; /* Made slightly larger for more impact */
   margin-top: 10px;
-
   transform-origin: top center;
   transform: rotate(0deg);
-
   display: block;
-
   will-change: transform;
   backface-visibility: hidden;
 }
@@ -56,39 +51,25 @@ let rotateAudio = document.getElementById("rotateAudio");
 let scareAudio = document.getElementById("scareAudio");
 
 let started = false;
-let isFlashing = false;
+let isScaring = false;
 
-// 🔊 softer creak
 rotateAudio.volume = 0.2;
 
-// 🎯 FIRST CLICK (unlock audio + start swing)
 img.addEventListener("click", () => {
   if (!started) {
     started = true;
-
-    // unlock audio (important for mobile)
     bgAudio.play().catch(()=>{});
-    scareAudio.play().then(()=>{
-      scareAudio.pause();
-      scareAudio.currentTime = 0;
-    }).catch(()=>{});
-
     rotateLoop();
   }
 });
 
-// ⚡ CLICK ANYWHERE → TRIGGER EVERY TIME
 document.addEventListener("click", () => {
-  if (!started) return;
-  if (isFlashing) return;
-
+  if (!started || isScaring) return;
   triggerInvert();
 });
 
-// 🔄 SWING LOOP
 function rotateLoop() {
-  let angle = Math.random() * 35;
-
+  let angle = Math.random() * 40;
   img.style.transition = "transform 2s ease-in-out";
   img.style.transform = `rotate(-${angle}deg)`;
 
@@ -96,10 +77,8 @@ function rotateLoop() {
   rotateAudio.play().catch(()=>{});
 
   setTimeout(() => {
-    let angle2 = Math.random() * 35;
-
+    let angle2 = Math.random() * 40;
     img.style.transform = `rotate(${angle2}deg)`;
-
     rotateAudio.currentTime = 0;
     rotateAudio.play().catch(()=>{});
 
@@ -107,14 +86,13 @@ function rotateLoop() {
   }, 2000);
 }
 
-// ⚡ INVERT FLASH + SOUND (MULTI TRIGGER)
 function triggerInvert() {
-  isFlashing = true;
-
-  let flashes = 6;
+  isScaring = true;
+  
+  // --- SETTINGS ---
+  let flashes = 30; // 3x longer than before (approx 2-3 seconds of chaos)
   let i = 0;
 
-  // 🔊 play scare sound
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
@@ -122,19 +100,25 @@ function triggerInvert() {
     if (i >= flashes) {
       clearInterval(interval);
       document.body.style.filter = "none";
-      isFlashing = false;
+      // Small cooldown before they can click again
+      setTimeout(() => { isScaring = false; }, 500); 
       return;
     }
 
+    // SCARY MODES
     if (i % 2 === 0) {
-      // 🔥 CLEAN BLACK ↔ WHITE INVERT
-      document.body.style.filter = "invert(1) contrast(2)";
+      // Deep-fried demonic look
+      document.body.style.filter = "invert(1) contrast(1000%) saturate(50) hue-rotate(270deg) brightness(1.5)";
+    } else if (i % 3 === 0) {
+      // Blood red / High Exposure look
+      document.body.style.filter = "invert(0.5) sepia(1) saturate(20) hue-rotate(0deg) brightness(2)";
     } else {
-      document.body.style.filter = "none";
+      // Pure Negative
+      document.body.style.filter = "invert(1) brightness(5)";
     }
 
     i++;
-  }, 80);
+  }, 70); // Slightly slower than 60ms makes the "longer" effect feel more agonizing
 }
 </script>
 
