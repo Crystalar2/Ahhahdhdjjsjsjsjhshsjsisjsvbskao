@@ -8,7 +8,6 @@
     margin: 0;
     height: 100%;
     background: black;
-    /* Prevents blue highlights and text selection */
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
@@ -26,7 +25,7 @@
     pointer-events: none;
   }
 
-  /* SMOOTH SWINGING ANIMATION */
+  /* 2s per swing - smooth and creepy */
   @keyframes swing {
     0% { transform: translateX(-50%) rotate(-15deg); }
     100% { transform: translateX(-50%) rotate(15deg); }
@@ -42,11 +41,9 @@
     animation: swing 2s ease-in-out infinite alternate;
     cursor: pointer;
     z-index: 5;
-    /* Extra insurance against blue boxes */
     outline: none;
   }
 
-  /* JUMPSCARE OVERLAY */
   .target {
     position: fixed;
     top: 0;
@@ -77,12 +74,8 @@
     100% { transform: scale(2); opacity: 0; }
   }
 
-  .active-jumpscare {
-    opacity: 1 !important;
-  }
-  .active-img {
-    animation: jumpscare-hit 0.6s forwards;
-  }
+  .active-jumpscare { opacity: 1 !important; }
+  .active-img { animation: jumpscare-hit 0.6s forwards; }
 </style>
 </head>
 <body>
@@ -95,10 +88,10 @@
   <img src="aa.jpeg" id="targetImg" draggable="false">
 </div>
 
-<!-- Audio -->
+<!-- Added 'autoplay' and 'muted' then unmuting via JS for best chance of auto-play -->
 <audio id="scream" src="aas.mp3"></audio>
 <audio id="creak" src="aa.mp3"></audio>
-<audio id="bg" src="bgaa.mp3" loop></audio>
+<audio id="bg" src="bgaa.mp3" loop autoplay></audio>
 
 <script>
 const pic = document.getElementById("pic");
@@ -111,6 +104,35 @@ const bg = document.getElementById("bg");
 let clickCount = 0;
 let started = false;
 
+// 1. SYNCED CREAK SOUND
+// This triggers every 2 seconds to match the 'swing' animation timing
+setInterval(() => {
+  if (started) {
+    creak.currentTime = 0;
+    creak.volume = 0.3;
+    creak.play().catch(() => {});
+  }
+}, 2000);
+
+// 2. AUTOPLAY & INITIALIZATION
+function initAudio() {
+  if (started) return;
+  started = true;
+  
+  // Try to play background music immediately
+  bg.volume = 0.5;
+  bg.play().catch(error => {
+    console.log("Autoplay prevented by browser. Waiting for user interaction.");
+  });
+}
+
+// Attempt to start as soon as the page loads
+window.addEventListener('load', initAudio);
+
+// Failsafe: start audio on first touch if autoplay was blocked
+document.addEventListener('pointerdown', initAudio, { once: true });
+
+// 3. JUMPSCARE LOGIC
 function triggerJumpscare() {
   scream.currentTime = 0;
   scream.play().catch(() => {});
@@ -124,24 +146,11 @@ function triggerJumpscare() {
   }, 600);
 }
 
-// Global click listener to unlock audio context
-document.addEventListener('pointerdown', () => {
-  if (!started) {
-    bg.volume = 0.5;
-    bg.play().catch(() => {});
-    started = true;
-  }
-}, { passive: false });
-
 pic.addEventListener("pointerdown", (e) => {
-  // e.preventDefault() stops the "blue flash" and context menus
   e.preventDefault();
   
+  // Every time they click the ghost, the count goes up
   clickCount++;
-  
-  creak.currentTime = 0;
-  creak.volume = 0.4;
-  creak.play().catch(() => {});
 
   if (clickCount >= 3) {
     clickCount = 0;
