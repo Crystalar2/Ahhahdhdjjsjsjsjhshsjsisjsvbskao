@@ -25,7 +25,7 @@
     pointer-events: none;
   }
 
-  /* 2s per swing - smooth and creepy */
+  /* The swing takes 2 seconds to go from one side to the other */
   @keyframes swing {
     0% { transform: translateX(-50%) rotate(-15deg); }
     100% { transform: translateX(-50%) rotate(15deg); }
@@ -88,10 +88,9 @@
   <img src="aa.jpeg" id="targetImg" draggable="false">
 </div>
 
-<!-- Added 'autoplay' and 'muted' then unmuting via JS for best chance of auto-play -->
 <audio id="scream" src="aas.mp3"></audio>
 <audio id="creak" src="aa.mp3"></audio>
-<audio id="bg" src="bgaa.mp3" loop autoplay></audio>
+<audio id="bg" src="bgaa.mp3" loop></audio>
 
 <script>
 const pic = document.getElementById("pic");
@@ -104,35 +103,36 @@ const bg = document.getElementById("bg");
 let clickCount = 0;
 let started = false;
 
-// 1. SYNCED CREAK SOUND
-// This triggers every 2 seconds to match the 'swing' animation timing
-setInterval(() => {
+// --- 1. AUTOMATIC CREAK LOGIC ---
+// This function plays the creak and then schedules itself to play again
+// exactly when the animation changes direction (every 2000ms).
+function playAutoCreak() {
   if (started) {
     creak.currentTime = 0;
     creak.volume = 0.3;
     creak.play().catch(() => {});
   }
-}, 2000);
+  // Schedule the next creak to match the 2s swing
+  setTimeout(playAutoCreak, 2000);
+}
 
-// 2. AUTOPLAY & INITIALIZATION
-function initAudio() {
+// --- 2. START EXPERIENCE ---
+function startEverything() {
   if (started) return;
   started = true;
   
-  // Try to play background music immediately
+  // Start Background Music
   bg.volume = 0.5;
-  bg.play().catch(error => {
-    console.log("Autoplay prevented by browser. Waiting for user interaction.");
-  });
+  bg.play().catch(() => {});
+  
+  // Start the automatic creaking loop
+  playAutoCreak();
 }
 
-// Attempt to start as soon as the page loads
-window.addEventListener('load', initAudio);
+// Start on first touch (Required by browsers)
+document.addEventListener('pointerdown', startEverything, { once: true });
 
-// Failsafe: start audio on first touch if autoplay was blocked
-document.addEventListener('pointerdown', initAudio, { once: true });
-
-// 3. JUMPSCARE LOGIC
+// --- 3. JUMPSCARE LOGIC ---
 function triggerJumpscare() {
   scream.currentTime = 0;
   scream.play().catch(() => {});
@@ -147,9 +147,8 @@ function triggerJumpscare() {
 }
 
 pic.addEventListener("pointerdown", (e) => {
-  e.preventDefault();
+  e.preventDefault(); // This stops the blue background/highlighting
   
-  // Every time they click the ghost, the count goes up
   clickCount++;
 
   if (clickCount >= 3) {
