@@ -3,29 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Don't Click</title>
 <style>
   html, body {
     margin: 0;
     height: 100%;
     background: black;
     overflow: hidden;
-    font-family: sans-serif;
+    touch-action: none; /* Prevents accidental zooming/scrolling */
   }
 
-  /* Warning text */
   .warning-bg {
     position: fixed;
     bottom: 10%;
     left: 50%;
     transform: translateX(-50%);
-    color: gray;
-    opacity: 0.3;
+    color: rgba(128, 128, 128, 0.4);
     font-size: 24px;
-    user-select: none;
+    pointer-events: none;
   }
 
-  /* The swinging picture */
+  /* SMOOTH SWINGING ANIMATION */
+  @keyframes swing {
+    0% { transform: translateX(-50%) rotate(-15deg); }
+    100% { transform: translateX(-50%) rotate(15deg); }
+  }
+
   .pic {
     position: absolute;
     top: 0;
@@ -33,61 +35,65 @@
     width: 60vw;
     max-width: 300px;
     transform-origin: top center;
-    transform: translateX(-50%);
-    transition: transform 1.5s ease-in-out;
-    touch-action: manipulation;
+    /* Apply the smooth animation here */
+    animation: swing 2s ease-in-out infinite alternate;
     cursor: pointer;
     z-index: 5;
   }
 
-  /* Jumpscare container */
+  /* JUMPSCARE OVERLAY */
   .target {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    background: black;
     opacity: 0;
     pointer-events: none;
-    z-index: 10;
-    background: rgba(0,0,0,0.5); /* Slight darkening during jump */
+    z-index: 999;
   }
 
   #targetImg {
-    width: 80vw;
-    max-width: 500px;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Makes the scare fill the screen */
     transform: scale(0);
   }
 
-  /* Animation */
-  @keyframes jumpscare {
-    0% { transform: scale(0.1); opacity: 1; }
-    20% { transform: scale(5); opacity: 1; }
-    90% { transform: scale(5); opacity: 1; }
-    100% { transform: scale(5); opacity: 0; }
+  @keyframes jumpscare-hit {
+    0% { transform: scale(0.5); opacity: 1; }
+    5% { transform: scale(1.2); }
+    10% { transform: scale(1); }
+    90% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  .active-jumpscare {
+    opacity: 1 !important;
+  }
+  .active-img {
+    animation: jumpscare-hit 0.6s forwards;
   }
 </style>
 </head>
-
 <body>
 
 <div class="warning-bg">cấm ấn 3 lần</div>
 
-<!-- Main swinging image -->
-<img src="aa.png" class="pic" id="pic" alt="swinging ghost">
+<img src="aa.png" class="pic" id="pic">
 
-<!-- Jumpscare overlay -->
 <div class="target" id="target">
-  <img src="aa.jpeg" id="targetImg" alt="jumpscare">
+  <img src="aa.jpeg" id="targetImg">
 </div>
 
-<!-- Audio Elements -->
-<audio id="scream" src="aas.mp3" preload="auto"></audio>
-<audio id="creak" src="aa.mp3" preload="auto"></audio>
-<audio id="bg" src="bgaa.mp3" preload="auto" loop></audio>
+<!-- Audio -->
+<audio id="scream" src="aas.mp3"></audio>
+<audio id="creak" src="aa.mp3"></audio>
+<audio id="bg" src="bgaa.mp3" loop></audio>
 
 <script>
 const pic = document.getElementById("pic");
@@ -97,43 +103,42 @@ const scream = document.getElementById("scream");
 const creak = document.getElementById("creak");
 const bg = document.getElementById("bg");
 
-let started = false;
 let clickCount = 0;
+let started = false;
 
-// 1. Initialize audio on first interaction
-function startExperience() {
-  if (started) return;
-  started = true;
-  console.log("Experience started, unlocking audio...");
+// Function to handle the jumpscare
+function triggerJumpscare() {
+  // Play sound immediately
+  scream.currentTime = 0;
+  scream.play().catch(e => console.log("Scream blocked:", e));
 
-  // Play background music
-  bg.volume = 0.4;
-  bg.play().catch(e => console.error("BG Audio blocked:", e));
+  // Trigger CSS animations
+  target.classList.add("active-jumpscare");
+  targetImg.classList.add("active-img");
+
+  // Reset after animation finishes
+  setTimeout(() => {
+    target.classList.remove("active-jumpscare");
+    targetImg.classList.remove("active-img");
+  }, 600);
 }
 
-// Start when user touches anywhere
-document.addEventListener("pointerdown", startExperience, { once: true });
+// Global click listener to unlock audio
+document.addEventListener('pointerdown', () => {
+  if (!started) {
+    bg.play().catch(() => {});
+    started = true;
+  }
+});
 
-// 2. Swinging Animation Logic
-let angle = 15;
-setInterval(() => {
-  angle = -angle;
-  pic.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-}, 1500);
-
-// 3. Click Logic
 pic.addEventListener("pointerdown", (e) => {
-  e.stopPropagation();
+  e.preventDefault();
   
-  // Ensure audio is active
-  if(!started) startExperience();
-
   clickCount++;
-  console.log("Click count:", clickCount);
-
-  // Play "creak" sound on every click
+  
+  // Play creak
   creak.currentTime = 0;
-  creak.volume = 0.3;
+  creak.volume = 0.5;
   creak.play().catch(() => {});
 
   if (clickCount >= 3) {
@@ -141,35 +146,6 @@ pic.addEventListener("pointerdown", (e) => {
     triggerJumpscare();
   }
 });
-
-function triggerJumpscare() {
-  // Show target container
-  target.style.opacity = "1";
-
-  // Restart Animation using the "reflow" trick
-  targetImg.style.animation = "none";
-  void targetImg.offsetWidth; // This forces the browser to reset the animation
-  targetImg.style.animation = "jumpscare 0.7s linear forwards";
-
-  // Play Scream
-  scream.currentTime = 0;
-  scream.volume = 1.0;
-  scream.play().catch(e => console.error("Scream failed:", e));
-
-  // Clean up after jump
-  setTimeout(() => {
-    target.style.opacity = "0";
-    targetImg.style.animation = "";
-  }, 700);
-}
-
-// Resume music if user tabs away and comes back
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && started) {
-    bg.play().catch(()=>{});
-  }
-});
 </script>
-
 </body>
 </html>
