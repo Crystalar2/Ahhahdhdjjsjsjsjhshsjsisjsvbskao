@@ -56,17 +56,17 @@ let rotateAudio = document.getElementById("rotateAudio");
 let scareAudio = document.getElementById("scareAudio");
 
 let started = false;
-let triggered = false;
+let isFlashing = false;
 
 // 🔊 softer creak
 rotateAudio.volume = 0.2;
 
-// 🎯 FIRST CLICK (unlock ALL audio)
+// 🎯 FIRST CLICK (unlock audio + start swing)
 img.addEventListener("click", () => {
   if (!started) {
     started = true;
 
-    // 🔥 UNLOCK audio (important for mobile)
+    // unlock audio (important for mobile)
     bgAudio.play().catch(()=>{});
     scareAudio.play().then(()=>{
       scareAudio.pause();
@@ -77,12 +77,11 @@ img.addEventListener("click", () => {
   }
 });
 
-// ⚡ CLICK ANYWHERE ONCE → TRIGGER
+// ⚡ CLICK ANYWHERE → TRIGGER EVERY TIME
 document.addEventListener("click", () => {
   if (!started) return;
-  if (triggered) return;
+  if (isFlashing) return;
 
-  triggered = true;
   triggerInvert();
 });
 
@@ -108,12 +107,14 @@ function rotateLoop() {
   }, 2000);
 }
 
-// 🎨 INVERT FLASH + SOUND
+// ⚡ INVERT FLASH + SOUND (MULTI TRIGGER)
 function triggerInvert() {
+  isFlashing = true;
+
   let flashes = 6;
   let i = 0;
 
-  // 🔊 PLAY SOUND (now works)
+  // 🔊 play scare sound
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
@@ -121,17 +122,19 @@ function triggerInvert() {
     if (i >= flashes) {
       clearInterval(interval);
       document.body.style.filter = "none";
+      isFlashing = false;
       return;
     }
 
     if (i % 2 === 0) {
-      document.body.style.filter = "invert(1) brightness(2)";
+      // 🔥 CLEAN BLACK ↔ WHITE INVERT
+      document.body.style.filter = "invert(1) contrast(2)";
     } else {
       document.body.style.filter = "none";
     }
 
     i++;
-  }, 100);
+  }, 80);
 }
 </script>
 
