@@ -25,7 +25,6 @@
     pointer-events: none;
   }
 
-  /* 2s per swing direction change */
   @keyframes swing {
     0% { transform: translateX(-50%) rotate(-15deg); }
     100% { transform: translateX(-50%) rotate(15deg); }
@@ -88,9 +87,10 @@
   <img src="aa.jpeg" id="targetImg" draggable="false">
 </div>
 
-<audio id="scream" src="aas.mp3"></audio>
-<audio id="creak" src="aa.mp3"></audio>
-<audio id="bg" src="bgaa.mp3" loop></audio>
+<!-- Audio elements -->
+<audio id="scream" src="aas.mp3" preload="auto"></audio>
+<audio id="creak" src="aa.mp3" preload="auto"></audio>
+<audio id="bg" src="bgaa.mp3" preload="auto" loop></audio>
 
 <script>
 const pic = document.getElementById("pic");
@@ -102,14 +102,25 @@ const bg = document.getElementById("bg");
 
 let clickCount = 0;
 let started = false;
-let creakInterval;
 
-// Function to handle the auto-creaking sync
+// Function to play background music with a "Force" catch
+function playBackgroundMusic() {
+  bg.volume = 0.5;
+  // Some browsers need a "play" promise handled
+  const playPromise = bg.play();
+
+  if (playPromise !== undefined) {
+    playPromise.then(_ => {
+      console.log("BG Music started successfully");
+    }).catch(error => {
+      console.error("BG Music failed to start:", error);
+    });
+  }
+}
+
 function startCreakLoop() {
-  // Play immediately once
   playCreak();
-  // Then repeat every 2 seconds to match the swing
-  creakInterval = setInterval(playCreak, 2000);
+  setInterval(playCreak, 2000);
 }
 
 function playCreak() {
@@ -118,9 +129,9 @@ function playCreak() {
   creak.play().catch(() => {});
 }
 
-// Function to trigger the jumpscare
 function triggerJumpscare() {
   scream.currentTime = 0;
+  scream.volume = 1.0;
   scream.play().catch(() => {});
 
   target.classList.add("active-jumpscare");
@@ -132,25 +143,18 @@ function triggerJumpscare() {
   }, 600);
 }
 
-// THE TRIGGER: Everything starts on the first click of the picture
+// MAIN TRIGGER
 pic.addEventListener("pointerdown", (e) => {
   e.preventDefault();
 
-  // 1. Start audio experience on first interaction
+  // First click starts the audio engine
   if (!started) {
     started = true;
-    
-    // Start background music looping
-    bg.volume = 0.5;
-    bg.play().catch(err => console.log("Audio play failed:", err));
-    
-    // Start the synchronized creaking
+    playBackgroundMusic();
     startCreakLoop();
   }
 
-  // 2. Count clicks for the jumpscare
   clickCount++;
-
   if (clickCount >= 3) {
     clickCount = 0;
     triggerJumpscare();
