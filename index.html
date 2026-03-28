@@ -13,7 +13,7 @@ html, body {
   overflow: hidden;
 }
 
-/* HANGING IMAGE - STAYS CLEAN */
+/* HANGING IMAGE */
 #img {
   width: 200px;
   margin-top: 10px;
@@ -23,7 +23,7 @@ html, body {
   transition: transform 2s ease-in-out;
 }
 
-/* JUMPSCARE IMAGE - THE TARGET FOR ALL EFFECTS */
+/* JUMPSCARE IMAGE */
 #scareImg {
   position: fixed;
   top: 0;
@@ -34,25 +34,21 @@ html, body {
   opacity: 0;
   pointer-events: none;
   z-index: 999;
-  /* Ensure the filter transition is fast for the invert strobe */
-  transition: opacity 0.1s;
 }
 
-/* VIOLENT SHAKE + INVERT(100%) FOR aa.jpeg */
-@keyframes violentScare {
-  0%   { transform: translate(0, 0) scale(1); filter: invert(0%); }
-  10%  { transform: translate(-150px, -80px) scale(1.3); filter: invert(100%) contrast(500%); }
-  25%  { transform: translate(150px, 90px) scale(1.1); filter: invert(0%); }
-  40%  { transform: translate(-180px, 120px) scale(1.5); filter: invert(100%) contrast(1000%); }
-  55%  { transform: translate(180px, -140px) scale(1.2); filter: invert(0%); }
-  75%  { transform: translate(-160px, 60px) scale(1.6); filter: invert(100%) contrast(600%); }
-  90%  { transform: translate(100px, -100px) scale(1.2); filter: invert(0%); }
-  100% { transform: translate(0, 0) scale(1); filter: invert(0%); }
+/* MODERATED SHAKE + INVERT(100%) */
+@keyframes moderatedScare {
+  0%   { transform: translate(0, 0); filter: invert(0%); }
+  20%  { transform: translate(-20px, -10px); filter: invert(100%) contrast(200%); }
+  40%  { transform: translate(25px, 15px); filter: invert(0%); }
+  60%  { transform: translate(-25px, 20px); filter: invert(100%) contrast(300%); }
+  80%  { transform: translate(20px, -15px); filter: invert(0%); }
+  100% { transform: translate(0, 0); filter: invert(0%); }
 }
 
-/* This class triggers the CSS side of the chaos */
 .aa-scare-effect {
-  animation: violentScare 0.05s infinite !important;
+  /* Slightly slower cycle for a "shiver" look rather than a "teleport" look */
+  animation: moderatedScare 0.12s infinite linear;
 }
 </style>
 </head>
@@ -63,7 +59,6 @@ html, body {
   <img id="img" src="aa.png">
 </div>
 
-<!-- This is the image that gets shaken, blurred, and inverted -->
 <img id="scareImg" src="aa.jpeg">
 
 <audio id="bgAudio" src="bgaa.mp3" loop></audio>
@@ -80,15 +75,14 @@ const scareAudio = document.getElementById("scareAudio");
 let started = false;
 let isScaring = false;
 
-// 1. Initialize MotionBlurJS on aa.jpeg ONLY
+// 1. Adjusted MotionBlurJS for aa.jpeg
 const mb = new MotionBlur(scareImg, {
-  intensity: 8, // Cranked up for extra motion blur
-  pulse: 0.9    // High pulse for stuttering effect
+  intensity: 2, // Reduced from 8 (Less blur)
+  pulse: 0.4    // Reduced from 0.9 (Smoother pulse)
 });
 
 rotateAudio.volume = 0.2;
 
-/* INITIAL CLICK TO START SWING */
 img.addEventListener("click", (e) => {
   e.stopPropagation();
   if (!started) {
@@ -98,7 +92,6 @@ img.addEventListener("click", (e) => {
   }
 });
 
-/* CLICK ANYWHERE TO TRIGGER aa.jpeg CHAOS */
 document.addEventListener("click", () => {
   if (!started || isScaring) return;
   triggerScare();
@@ -106,9 +99,9 @@ document.addEventListener("click", () => {
 
 function rotateLoop() {
   if (isScaring) return;
-  let angle = Math.random() * 40;
+  let angle = Math.random() * 30;
   img.style.transform = `rotate(${Math.random() > 0.5 ? -angle : angle}deg)`;
-
+  
   rotateAudio.currentTime = 0;
   rotateAudio.play().catch(()=>{});
 
@@ -120,30 +113,27 @@ function rotateLoop() {
 function triggerScare() {
   isScaring = true;
 
-  // Sound reset
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
-  // Start MotionBlurJS on aa.jpeg
+  // Start subtle MotionBlur
   mb.start();
 
-  // Apply Shake and Invert via CSS class
+  // Apply Shiver and Invert
   scareImg.style.opacity = "1";
   scareImg.classList.add("aa-scare-effect");
 
-  // Chaos duration (3 seconds for a long scare)
+  // Scare lasts for 2 seconds
   setTimeout(() => {
-    // Kill the effects
     mb.stop();
     scareImg.style.opacity = "0";
     scareImg.classList.remove("aa-scare-effect");
     
-    // Cooldown
     setTimeout(() => {
       isScaring = false;
-      rotateLoop(); // Go back to normal swing
-    }, 500);
-  }, 3000);
+      rotateLoop();
+    }, 400);
+  }, 2000);
 }
 </script>
 
