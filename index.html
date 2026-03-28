@@ -11,14 +11,12 @@ html, body {
   overflow: hidden;
 }
 
-/* HANGING IMAGE (NOT AFFECTED) */
+/* HANGING IMAGE */
 #img {
   width: 200px;
   margin-top: 10px;
-
   transform-origin: top center;
   transform: rotate(0deg);
-
   position: relative;
   z-index: 2;
 }
@@ -31,13 +29,30 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-
   opacity: 0;
   pointer-events: none;
   z-index: 999;
+  /* High-speed transition for blur effect */
+  transition: filter 0.03s linear;
+}
 
-  /* smooth effect */
-  transition: filter 0.05s ease-in-out;
+/* VIOLENT SHAKE + SCALE (From W3Schools / MotionBlur logic) */
+@keyframes shakeBlur {
+  0% { transform: translate(1px, 1px) scale(1.01); filter: blur(0px); }
+  10% { transform: translate(-2px, -3px) scale(1.05); filter: blur(2px); }
+  20% { transform: translate(-4px, 0px) scale(1.02); filter: blur(5px); }
+  30% { transform: translate(4px, 3px) scale(1.08); filter: blur(1px); }
+  40% { transform: translate(2px, -2px) scale(1.03); filter: blur(8px); }
+  50% { transform: translate(-2px, 3px) scale(1.1); filter: blur(3px); }
+  60% { transform: translate(-4px, 2px) scale(1.04); filter: blur(10px); }
+  70% { transform: translate(4px, 2px) scale(1.09); filter: blur(2px); }
+  80% { transform: translate(-2px, -2px) scale(1.02); filter: blur(7px); }
+  90% { transform: translate(2px, 3px) scale(1.06); filter: blur(1px); }
+  100% { transform: translate(2px, -3px) scale(1.01); filter: blur(0px); }
+}
+
+.scare-active {
+  animation: shakeBlur 0.1s infinite;
 }
 </style>
 
@@ -69,7 +84,8 @@ let isScaring = false;
 rotateAudio.volume = 0.2;
 
 /* START */
-img.addEventListener("click", () => {
+img.addEventListener("click", (e) => {
+  e.stopPropagation();
   if (!started) {
     started = true;
     bgAudio.play().catch(()=>{});
@@ -77,66 +93,50 @@ img.addEventListener("click", () => {
   }
 });
 
-/* TRIGGER */
+/* TRIGGER ON EVERY CLICK */
 document.addEventListener("click", () => {
   if (!started || isScaring) return;
   triggerScare();
 });
 
-/* ROTATE */
+/* SWING LOGIC */
 function rotateLoop() {
+  if (isScaring) return;
   let angle = Math.random() * 35;
-
   img.style.transition = "transform 2s ease-in-out";
-  img.style.transform = `rotate(-${angle}deg)`;
+  img.style.transform = `rotate(${angle % 2 === 0 ? -angle : angle}deg)`;
 
   rotateAudio.currentTime = 0;
   rotateAudio.play().catch(()=>{});
 
   setTimeout(() => {
-    let angle2 = Math.random() * 35;
-
-    img.style.transform = `rotate(${angle2}deg)`;
-
-    rotateAudio.currentTime = 0;
-    rotateAudio.play().catch(()=>{});
-
-    setTimeout(rotateLoop, 2000);
+    if (!isScaring) rotateLoop();
   }, 2000);
 }
 
-/* ONLY aa.jpeg EFFECT */
+/* SHAKE & BLUR ONLY */
 function triggerScare() {
   isScaring = true;
 
-  let flashes = 10;
-  let i = 0;
-
+  // 1. Reset and Play Sound
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
-  scareImg.style.opacity = 1;
+  // 2. Show Image and Start Animation
+  scareImg.style.opacity = "1";
+  scareImg.classList.add("scare-active");
 
-  let interval = setInterval(() => {
-    if (i >= flashes) {
-      clearInterval(interval);
-
-      scareImg.style.opacity = 0;
-      scareImg.style.filter = "none";
-
+  // 3. Shake Duration (2.5 seconds)
+  setTimeout(() => {
+    scareImg.style.opacity = "0";
+    scareImg.classList.remove("scare-active");
+    
+    // Cool down before next scare
+    setTimeout(() => {
       isScaring = false;
-      return;
-    }
-
-    if (i % 2 === 0) {
-      // ONLY THE JUMPSCARE IMAGE INVERTS
-      scareImg.style.filter = "invert(1) contrast(2)";
-    } else {
-      scareImg.style.filter = "none";
-    }
-
-    i++;
-  }, 60);
+      rotateLoop();
+    }, 200);
+  }, 2500);
 }
 </script>
 
