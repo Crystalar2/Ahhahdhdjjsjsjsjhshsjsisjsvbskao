@@ -58,6 +58,7 @@ html, body {
   transform: scale(0);
 }
 
+/* 💀 animation */
 @keyframes jumpscare {
   0% { transform: scale(0); opacity: 1; }
   10% { transform: scale(5); }
@@ -76,7 +77,6 @@ html, body {
   <img src="aa.jpeg" id="targetImg">
 </div>
 
-<!-- ✅ preload helps mobile -->
 <audio id="scream" src="aas.mp3" preload="auto"></audio>
 <audio id="creak" src="aa.mp3" preload="auto"></audio>
 <audio id="bg" src="bgaa.mp3" preload="auto" loop></audio>
@@ -94,7 +94,7 @@ let currentAngle = 0;
 let started = false;
 let clickCount = 0;
 
-/* 🔥 VERY IMPORTANT: unlock audio properly */
+/* 🔓 unlock audio */
 function unlockAudio() {
   [bg, creak, scream].forEach(a => {
     a.muted = true;
@@ -130,7 +130,7 @@ function swing() {
   setTimeout(swing, duration);
 }
 
-/* ▶ start (MUST be user gesture) */
+/* ▶ start */
 function startExperience() {
   if (started) return;
   started = true;
@@ -141,8 +141,10 @@ function startExperience() {
 
 document.body.addEventListener("pointerdown", startExperience, { once: true });
 
-/* 👁 jumpscare */
-pic.addEventListener("pointerdown", () => {
+/* 👁 jumpscare FIXED */
+pic.addEventListener("pointerdown", (e) => {
+  e.stopPropagation(); // 🔥 prevent conflict
+
   clickCount++;
 
   if (clickCount === 3) {
@@ -154,10 +156,15 @@ pic.addEventListener("pointerdown", () => {
 
     target.style.opacity = "1";
 
-    /* force animation restart */
+    /* 🔥 FORCE animation restart (stable way) */
     targetImg.style.animation = "none";
-    targetImg.offsetHeight;
-    targetImg.style.animation = "jumpscare 0.7s linear";
+    targetImg.style.transform = "scale(0)";
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        targetImg.style.animation = "jumpscare 0.7s linear";
+      });
+    });
 
     scream.currentTime = 0;
     scream.play().catch(()=>{});
@@ -170,7 +177,7 @@ pic.addEventListener("pointerdown", () => {
   }
 });
 
-/* 🔁 fix audio after tab switch */
+/* 🔁 keep audio alive */
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && started) {
     bg.play().catch(()=>{});
