@@ -27,7 +27,7 @@ html, body {
   pointer-events: none;
 }
 
-/* 🪢 picture */
+/* 🪢 hanging picture */
 .pic {
   position: absolute;
   top: 0;
@@ -41,7 +41,7 @@ html, body {
   touch-action: manipulation;
 }
 
-/* 👁 jumpscare */
+/* 👁 jumpscare container */
 .target {
   position: fixed;
   top: 0;
@@ -62,7 +62,7 @@ html, body {
   transform: scale(0);
 }
 
-/* 💀 jumpscare anim */
+/* 💀 jumpscare animation */
 @keyframes jumpscare {
   0% { transform: scale(0); opacity: 1; filter: invert(0); }
   10% { transform: scale(5); }
@@ -76,20 +76,10 @@ html, body {
 /* 📳 SCREEN SHAKE */
 @keyframes shake {
   0% { transform: translate(0,0); }
-  10% { transform: translate(-10px,5px); }
-  20% { transform: translate(10px,-5px); }
-  30% { transform: translate(-8px,8px); }
-  40% { transform: translate(8px,-8px); }
-  50% { transform: translate(-5px,5px); }
-  60% { transform: translate(5px,-5px); }
-  70% { transform: translate(-3px,3px); }
-  80% { transform: translate(3px,-3px); }
-  90% { transform: translate(-2px,2px); }
+  25% { transform: translate(-10px,5px); }
+  50% { transform: translate(10px,-5px); }
+  75% { transform: translate(-5px,5px); }
   100% { transform: translate(0,0); }
-}
-
-.shake {
-  animation: shake 0.7s;
 }
 </style>
 </head>
@@ -123,14 +113,8 @@ let clickCount = 0;
 
 /* 🔓 unlock audio */
 function unlockAudio() {
-  [bg, creak, scream].forEach(a => {
-    a.muted = true;
-    a.play().then(() => {
-      a.pause();
-      a.currentTime = 0;
-      a.muted = false;
-    }).catch(()=>{});
-  });
+  bg.volume = 0.5;
+  bg.play().catch(()=>{});
 }
 
 /* 🪢 swing */
@@ -158,33 +142,19 @@ function swing() {
   setTimeout(swing, duration);
 }
 
-/* ▶ start */
+/* ▶ start (works everywhere) */
 function startExperience() {
   if (started) return;
   started = true;
+
   unlockAudio();
   swing();
 }
 
-/* tap fix */
-function addTapListener(el, fn) {
-  let tapped = false;
-
-  el.addEventListener("touchstart", (e) => {
-    tapped = true;
-    fn(e);
-  });
-
-  el.addEventListener("click", (e) => {
-    if (!tapped) fn(e);
-    tapped = false;
-  });
-}
-
-addTapListener(document.body, startExperience);
+document.body.addEventListener("pointerdown", startExperience, { once: true });
 
 /* 👁 jumpscare */
-function handleTap() {
+pic.addEventListener("pointerdown", () => {
   clickCount++;
 
   if (clickCount === 3) {
@@ -192,13 +162,13 @@ function handleTap() {
 
     /* 📳 VIBRATE */
     if (navigator.vibrate) {
-      navigator.vibrate([100, 50, 200]);
+      navigator.vibrate([200, 100, 300]);
     }
 
-    /* 📳 SCREEN SHAKE */
-    document.body.classList.add("shake");
+    /* 📳 SHAKE */
+    document.body.style.animation = "shake 0.7s";
     setTimeout(() => {
-      document.body.classList.remove("shake");
+      document.body.style.animation = "";
     }, 700);
 
     creak.currentTime = 0;
@@ -212,6 +182,7 @@ function handleTap() {
     targetImg.offsetHeight;
     targetImg.style.animation = "jumpscare 0.7s linear";
 
+    scream.currentTime = 0;
     scream.play().catch(()=>{});
 
     setTimeout(() => {
@@ -220,11 +191,9 @@ function handleTap() {
       targetImg.style.transform = "scale(0)";
     }, 700);
   }
-}
+});
 
-addTapListener(pic, handleTap);
-
-/* fix audio after tab switch */
+/* 🔁 fix audio after tab switch */
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && started) {
     bg.play().catch(()=>{});
