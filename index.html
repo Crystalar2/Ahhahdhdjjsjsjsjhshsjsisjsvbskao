@@ -32,27 +32,27 @@ html, body {
   opacity: 0;
   pointer-events: none;
   z-index: 999;
-  /* High-speed transition for blur effect */
-  transition: filter 0.03s linear;
 }
 
-/* VIOLENT SHAKE + SCALE (From W3Schools / MotionBlur logic) */
-@keyframes shakeBlur {
-  0% { transform: translate(1px, 1px) scale(1.01); filter: blur(0px); }
-  10% { transform: translate(-2px, -3px) scale(1.05); filter: blur(2px); }
-  20% { transform: translate(-4px, 0px) scale(1.02); filter: blur(5px); }
-  30% { transform: translate(4px, 3px) scale(1.08); filter: blur(1px); }
-  40% { transform: translate(2px, -2px) scale(1.03); filter: blur(8px); }
-  50% { transform: translate(-2px, 3px) scale(1.1); filter: blur(3px); }
-  60% { transform: translate(-4px, 2px) scale(1.04); filter: blur(10px); }
-  70% { transform: translate(4px, 2px) scale(1.09); filter: blur(2px); }
-  80% { transform: translate(-2px, -2px) scale(1.02); filter: blur(7px); }
-  90% { transform: translate(2px, 3px) scale(1.06); filter: blur(1px); }
-  100% { transform: translate(2px, -3px) scale(1.01); filter: blur(0px); }
+/* VIOLENT SHAKE + INVERT + BLUR */
+/* We use large translate values for "Violent" movement */
+@keyframes violentScare {
+  0%   { transform: translate(0, 0) scale(1); filter: invert(0) blur(0px); }
+  10%  { transform: translate(-50px, -20px) scale(1.1); filter: invert(1) contrast(2) blur(5px); }
+  20%  { transform: translate(50px, 30px) scale(1.05); filter: invert(0) blur(2px); }
+  30%  { transform: translate(-60px, 40px) scale(1.2); filter: invert(1) contrast(3) blur(10px); }
+  40%  { transform: translate(70px, -50px) scale(1.1); filter: invert(0) blur(4px); }
+  50%  { transform: translate(-80px, 20px) scale(1.3); filter: invert(1) contrast(2) blur(15px); }
+  60%  { transform: translate(90px, -30px) scale(1.15); filter: invert(0) blur(2px); }
+  70%  { transform: translate(-50px, 60px) scale(1.2); filter: invert(1) contrast(4) blur(12px); }
+  80%  { transform: translate(40px, -40px) scale(1.1); filter: invert(0) blur(5px); }
+  90%  { transform: translate(-20px, 50px) scale(1.25); filter: invert(1) contrast(2) blur(8px); }
+  100% { transform: translate(0, 0) scale(1); filter: invert(0) blur(0px); }
 }
 
 .scare-active {
-  animation: shakeBlur 0.1s infinite;
+  /* 0.08s makes it extremely fast and jittery */
+  animation: violentScare 0.08s infinite;
 }
 </style>
 
@@ -99,12 +99,11 @@ document.addEventListener("click", () => {
   triggerScare();
 });
 
-/* SWING LOGIC */
 function rotateLoop() {
   if (isScaring) return;
   let angle = Math.random() * 35;
   img.style.transition = "transform 2s ease-in-out";
-  img.style.transform = `rotate(${angle % 2 === 0 ? -angle : angle}deg)`;
+  img.style.transform = `rotate(${Math.random() > 0.5 ? -angle : angle}deg)`;
 
   rotateAudio.currentTime = 0;
   rotateAudio.play().catch(()=>{});
@@ -114,29 +113,27 @@ function rotateLoop() {
   }, 2000);
 }
 
-/* SHAKE & BLUR ONLY */
 function triggerScare() {
   isScaring = true;
 
-  // 1. Reset and Play Sound
+  // Restart scare sound
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
-  // 2. Show Image and Start Animation
+  // Activate Visuals
   scareImg.style.opacity = "1";
   scareImg.classList.add("scare-active");
 
-  // 3. Shake Duration (2.5 seconds)
+  // Duration: 2 seconds of high-intensity chaos
   setTimeout(() => {
     scareImg.style.opacity = "0";
     scareImg.classList.remove("scare-active");
     
-    // Cool down before next scare
     setTimeout(() => {
       isScaring = false;
-      rotateLoop();
-    }, 200);
-  }, 2500);
+      rotateLoop(); // Go back to swinging
+    }, 300);
+  }, 2000);
 }
 </script>
 
