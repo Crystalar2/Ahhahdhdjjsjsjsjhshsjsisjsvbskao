@@ -2,82 +2,142 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jumpscare</title>
 
 <style>
 html, body {
   margin: 0;
-  height: 100%;
+  padding: 0;
   background: black;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-/* button */
-#btn {
-  position: absolute;
-  z-index: 10;
-  padding: 15px 25px;
-  font-size: 20px;
+/* HANGING IMAGE (NOT AFFECTED) */
+#img {
+  width: 200px;
+  margin-top: 10px;
+
+  transform-origin: top center;
+  transform: rotate(0deg);
+
+  position: relative;
+  z-index: 2;
 }
 
-/* image */
+/* JUMPSCARE IMAGE */
 #scareImg {
-  max-width: 100%;
-  max-height: 100%;
-  display: none;
-  transform-origin: center;
-}
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 
-/* SHAKE FIXED */
-@keyframes shake {
-  0% { transform: translate(15px, 20px) rotate(0deg); }
-  25% { transform: translate(-9px, 13px) rotate(-2deg); }
-  50% { transform: translate(20px, -12px) rotate(2deg); }
-  75% { transform: translate(-25px, -30px) rotate(-1deg); }
-  100% { transform: translate(9px, 0px) rotate(0deg); }
-}
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
 
-.shake {
-  animation: shake 0.08s infinite;
-}
-
-.invert {
-  filter: invert(1);
+  /* smooth effect */
+  transition: filter 0.05s ease-in-out;
 }
 </style>
+
 </head>
 
 <body>
 
-<button id="btn">CLICK</button>
+<div style="position:fixed; width:100%; display:flex; justify-content:center;">
+  <img id="img" src="aa.png">
+</div>
 
-<img id="fadejs scareImg" fadejs-data="opacity:0.6;" src="aa.jpeg">
+<img id="scareImg" src="aa.jpeg">
 
-<audio id="sound" src="aas.mp3"></audio>
+<audio id="bgAudio" src="bgaa.mp3" loop></audio>
+<audio id="rotateAudio" src="aa.mp3"></audio>
+<audio id="scareAudio" src="aas.mp3"></audio>
 
-<script src="https://adir-sl.github.io/MotionBlurJS/blur.js">
-const btn = document.getElementById("btn");
-const img = document.getElementById("scareImg");
-const sound = document.getElementById("sound");
+<script>
+let img = document.getElementById("img");
+let scareImg = document.getElementById("scareImg");
 
-btn.onclick = () => {
-  img.style.display = "block";
+let bgAudio = document.getElementById("bgAudio");
+let rotateAudio = document.getElementById("rotateAudio");
+let scareAudio = document.getElementById("scareAudio");
 
-  sound.currentTime = 0;
-  sound.play();
+let started = false;
+let isScaring = false;
 
-  img.classList.add("shake");
-  img.classList.add("invert");
+rotateAudio.volume = 0.2;
+
+/* START */
+img.addEventListener("click", () => {
+  if (!started) {
+    started = true;
+    bgAudio.play().catch(()=>{});
+    rotateLoop();
+  }
+});
+
+/* TRIGGER */
+document.addEventListener("click", () => {
+  if (!started || isScaring) return;
+  triggerScare();
+});
+
+/* ROTATE */
+function rotateLoop() {
+  let angle = Math.random() * 35;
+
+  img.style.transition = "transform 2s ease-in-out";
+  img.style.transform = `rotate(-${angle}deg)`;
+
+  rotateAudio.currentTime = 0;
+  rotateAudio.play().catch(()=>{});
 
   setTimeout(() => {
-    img.classList.remove("shake");
-    img.classList.remove("invert");
-    img.style.display = "none";
-  }, 1500);
-};
+    let angle2 = Math.random() * 35;
+
+    img.style.transform = `rotate(${angle2}deg)`;
+
+    rotateAudio.currentTime = 0;
+    rotateAudio.play().catch(()=>{});
+
+    setTimeout(rotateLoop, 2000);
+  }, 2000);
+}
+
+/* ONLY aa.jpeg EFFECT */
+function triggerScare() {
+  isScaring = true;
+
+  let flashes = 10;
+  let i = 0;
+
+  scareAudio.currentTime = 0;
+  scareAudio.play().catch(()=>{});
+
+  scareImg.style.opacity = 1;
+
+  let interval = setInterval(() => {
+    if (i >= flashes) {
+      clearInterval(interval);
+
+      scareImg.style.opacity = 0;
+      scareImg.style.filter = "none";
+
+      isScaring = false;
+      return;
+    }
+
+    if (i % 2 === 0) {
+      // ONLY THE JUMPSCARE IMAGE INVERTS
+      scareImg.style.filter = "invert(1) contrast(2)";
+    } else {
+      scareImg.style.filter = "none";
+    }
+
+    i++;
+  }, 60);
+}
 </script>
 
 </body>
