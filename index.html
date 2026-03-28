@@ -25,7 +25,7 @@
     pointer-events: none;
   }
 
-  /* The swing takes 2 seconds to go from one side to the other */
+  /* 2s per swing direction change */
   @keyframes swing {
     0% { transform: translateX(-50%) rotate(-15deg); }
     100% { transform: translateX(-50%) rotate(15deg); }
@@ -102,37 +102,23 @@ const bg = document.getElementById("bg");
 
 let clickCount = 0;
 let started = false;
+let creakInterval;
 
-// --- 1. AUTOMATIC CREAK LOGIC ---
-// This function plays the creak and then schedules itself to play again
-// exactly when the animation changes direction (every 2000ms).
-function playAutoCreak() {
-  if (started) {
-    creak.currentTime = 0;
-    creak.volume = 0.3;
-    creak.play().catch(() => {});
-  }
-  // Schedule the next creak to match the 2s swing
-  setTimeout(playAutoCreak, 2000);
+// Function to handle the auto-creaking sync
+function startCreakLoop() {
+  // Play immediately once
+  playCreak();
+  // Then repeat every 2 seconds to match the swing
+  creakInterval = setInterval(playCreak, 2000);
 }
 
-// --- 2. START EXPERIENCE ---
-function startEverything() {
-  if (started) return;
-  started = true;
-  
-  // Start Background Music
-  bg.volume = 0.5;
-  bg.play().catch(() => {});
-  
-  // Start the automatic creaking loop
-  playAutoCreak();
+function playCreak() {
+  creak.currentTime = 0;
+  creak.volume = 0.3;
+  creak.play().catch(() => {});
 }
 
-// Start on first touch (Required by browsers)
-document.addEventListener('pointerdown', startEverything, { once: true });
-
-// --- 3. JUMPSCARE LOGIC ---
+// Function to trigger the jumpscare
 function triggerJumpscare() {
   scream.currentTime = 0;
   scream.play().catch(() => {});
@@ -146,9 +132,23 @@ function triggerJumpscare() {
   }, 600);
 }
 
+// THE TRIGGER: Everything starts on the first click of the picture
 pic.addEventListener("pointerdown", (e) => {
-  e.preventDefault(); // This stops the blue background/highlighting
-  
+  e.preventDefault();
+
+  // 1. Start audio experience on first interaction
+  if (!started) {
+    started = true;
+    
+    // Start background music looping
+    bg.volume = 0.5;
+    bg.play().catch(err => console.log("Audio play failed:", err));
+    
+    // Start the synchronized creaking
+    startCreakLoop();
+  }
+
+  // 2. Count clicks for the jumpscare
   clickCount++;
 
   if (clickCount >= 3) {
