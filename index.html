@@ -11,39 +11,40 @@ html, body {
   transition: filter 0.05s ease-in-out;
 }
 
+/* CENTER */
 #wrap {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
+
   display: flex;
   justify-content: center;
   align-items: flex-start;
 }
 
+/* NORMAL IMAGE */
 #img {
   width: 200px;
   margin-top: 10px;
+
   transform-origin: top center;
-  transform: rotate(0deg) scale(1);
-  display: block;
-  will-change: transform, filter;
-  backface-visibility: hidden;
-  transition: transform 2s ease-in-out;
+  transform: rotate(0deg);
 }
 
-/* Violent shake animation */
-.shake {
-  animation: jitter 0.1s infinite;
-}
+/* JUMPSCARE IMAGE (hidden by default) */
+#scareImg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 
-@keyframes jitter {
-  0% { transform: scale(4) translate(0, 50px); }
-  25% { transform: scale(4.1) translate(5px, 55px); }
-  50% { transform: scale(3.9) translate(-5px, 45px); }
-  75% { transform: scale(4) translate(3px, 52px); }
-  100% { transform: scale(4) translate(0, 50px); }
+  object-fit: cover;
+
+  opacity: 0;
+  pointer-events: none;
 }
 </style>
 </head>
@@ -51,9 +52,10 @@ html, body {
 <body>
 
 <div id="wrap">
-  <!-- UPDATED FILENAME TO aa.jpeg -->
-  <img id="img" src="aa.jpeg">
+  <img id="img" src="aa.png">
 </div>
+
+<img id="scareImg" src="aa.jpeg">
 
 <audio id="bgAudio" src="bgaa.mp3" loop></audio>
 <audio id="rotateAudio" src="aa.mp3"></audio>
@@ -61,6 +63,8 @@ html, body {
 
 <script>
 let img = document.getElementById("img");
+let scareImg = document.getElementById("scareImg");
+
 let bgAudio = document.getElementById("bgAudio");
 let rotateAudio = document.getElementById("rotateAudio");
 let scareAudio = document.getElementById("scareAudio");
@@ -70,75 +74,72 @@ let isScaring = false;
 
 rotateAudio.volume = 0.2;
 
-// START ON FIRST CLICK
-document.addEventListener("click", () => {
+/* START */
+img.addEventListener("click", () => {
   if (!started) {
     started = true;
     bgAudio.play().catch(()=>{});
     rotateLoop();
-    // Don't trigger the scare on the VERY first click to avoid skipping the intro
-    return; 
-  }
-
-  // TRIGGER REPEATABLE JUMPSCARE
-  if (!isScaring) {
-    triggerScare();
   }
 });
 
+/* TRIGGER */
+document.addEventListener("click", () => {
+  if (!started || isScaring) return;
+  triggerInvert();
+});
+
+/* SWING */
 function rotateLoop() {
-  if (isScaring) return;
-  
-  let angle = (Math.random() * 40) - 20;
+  let angle = Math.random() * 35;
+
   img.style.transition = "transform 2s ease-in-out";
-  img.style.transform = `rotate(${angle}deg) scale(1)`;
+  img.style.transform = `rotate(-${angle}deg)`;
 
   rotateAudio.currentTime = 0;
   rotateAudio.play().catch(()=>{});
 
   setTimeout(() => {
-    if (!isScaring) rotateLoop();
+    let angle2 = Math.random() * 35;
+
+    img.style.transform = `rotate(${angle2}deg)`;
+
+    rotateAudio.currentTime = 0;
+    rotateAudio.play().catch(()=>{});
+
+    setTimeout(rotateLoop, 2000);
   }, 2000);
 }
 
-function triggerScare() {
+/* SCARY EFFECT */
+function triggerInvert() {
   isScaring = true;
-  
-  // 1. Play Sound
+
+  let flashes = 10;
+  let i = 0;
+
   scareAudio.currentTime = 0;
   scareAudio.play().catch(()=>{});
 
-  // 2. Visual Chaos
-  img.classList.add("shake");
-  
-  let flashes = 40; // Long duration
-  let i = 0;
-
-  let flashInterval = setInterval(() => {
+  let interval = setInterval(() => {
     if (i >= flashes) {
-      clearInterval(flashInterval);
-      // RESET
+      clearInterval(interval);
       document.body.style.filter = "none";
-      img.classList.remove("shake");
-      img.style.transition = "transform 0.5s ease-out";
-      img.style.transform = "scale(1) rotate(0deg)";
-      
-      setTimeout(() => {
-        isScaring = false;
-        rotateLoop(); // Restart the swing
-      }, 500);
+      scareImg.style.opacity = 0;
+      isScaring = false;
       return;
     }
 
-    // SCARY INVERTED LOOKS
     if (i % 2 === 0) {
-      document.body.style.filter = "invert(1) contrast(800%) hue-rotate(180deg) brightness(1.5)";
+      document.body.style.filter = "invert(1) contrast(2)";
+      scareImg.style.opacity = 1;   // SHOW JUMPSCARE
     } else {
       document.body.style.filter = "none";
+      scareImg.style.opacity = 0;   // HIDE
     }
 
     i++;
-  }, 60); // Fast pulse
+  }, 60);
 }
 </script>
 
