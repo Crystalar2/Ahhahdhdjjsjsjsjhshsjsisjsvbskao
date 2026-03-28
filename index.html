@@ -10,18 +10,26 @@ html, body {
   overflow: hidden;
 }
 
+/* normal image */
 #img {
   position: absolute;
-  top: 100%;
+  top: 50%;
   left: 50%;
   transform-origin: top center;
   transform: translate(-50%, -50%) rotate(0deg);
   width: 200px;
-  -khtml-user-select: none;
-  -o-user-select: none;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  user-select: none;
+}
+
+/* jumpscare */
+#jumpscare {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+  z-index: 999;
 }
 </style>
 </head>
@@ -29,27 +37,32 @@ html, body {
 <body>
 
 <img id="img" src="aa.png">
+<img id="jumpscare" src="jumpscare.png">
 
 <audio id="bgAudio" src="bgaa.mp3" loop></audio>
 <audio id="rotateAudio" src="aa.mp3"></audio>
+<audio id="scareAudio" src="scare.mp3"></audio>
 
 <script>
 let img = document.getElementById("img");
 let bgAudio = document.getElementById("bgAudio");
 let rotateAudio = document.getElementById("rotateAudio");
+let scareAudio = document.getElementById("scareAudio");
+let jumpscare = document.getElementById("jumpscare");
 
-let started = false; // only first click trigger
+let started = false;
 
 // 🎯 FIRST CLICK
 img.addEventListener("click", () => {
   if (!started) {
     started = true;
 
-    // play background loop
-    bgAudio.play().catch(() => {});
-
-    // start rotation loop
+    bgAudio.play().catch(()=>{});
     rotateLoop();
+
+    // ⏱️ trigger jumpscare randomly (3–8 seconds)
+    let delay = Math.random() * 5000 + 3000;
+    setTimeout(triggerJumpscare, delay);
   }
 });
 
@@ -59,24 +72,30 @@ function rotateLoop() {
   let angle = Math.random() * 35;
 
   img.style.transition = "transform 2s ease-in-out";
-
-  // LEFT
   img.style.transform = `translate(-50%, -50%) rotate(-${angle}deg)`;
 
-  if (started) rotateAudio.play().catch(() => {});
+  rotateAudio.currentTime = 0;
+  rotateAudio.play().catch(()=>{});
 
   setTimeout(() => {
     let angle2 = Math.random() * 35;
 
-    // RIGHT
     img.style.transform = `translate(-50%, -50%) rotate(${angle2}deg)`;
 
-    if (started) rotateAudio.play().catch(() => {});
+    rotateAudio.currentTime = 0;
+    rotateAudio.play().catch(()=>{});
 
-    // repeat forever
     setTimeout(rotateLoop, 2000);
-
   }, 2000);
+}
+
+
+// 💀 JUMPSCARE
+function triggerJumpscare() {
+  jumpscare.style.display = "block";
+
+  scareAudio.currentTime = 0;
+  scareAudio.play().catch(()=>{});
 }
 </script>
 
