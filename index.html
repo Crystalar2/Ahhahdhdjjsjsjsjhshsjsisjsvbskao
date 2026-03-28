@@ -7,28 +7,35 @@ html, body {
   margin: 0;
   padding: 0;
   background: black;
+  overflow: hidden;
 }
 
-/* WRAPPER (fix glitch line) */
+/* FULLSCREEN WRAPPER (no more cropping) */
 #wrap {
-  position: absolute;
+  position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;   /* center horizontally */
+  align-items: flex-start;   /* stick to top */
 }
 
 /* IMAGE */
 #img {
-  display: block;
   width: 200px;
+  margin-top: 10px;
 
   transform-origin: top center;
   transform: rotate(0deg);
 
-  /* 🔥 anti-glitch fixes */
+  display: block;
+
+  /* anti-glitch */
   will-change: transform;
   backface-visibility: hidden;
-  transform-style: preserve-3d;
 }
 </style>
 </head>
@@ -57,7 +64,7 @@ img.addEventListener("click", () => {
   if (!started) {
     started = true;
 
-    // unlock + play bg audio
+    // play background (loops)
     bgAudio.play().catch(()=>{});
 
     // start swinging
@@ -66,7 +73,7 @@ img.addEventListener("click", () => {
 });
 
 
-// 🔄 ROTATION LOOP (smooth swing)
+// 🔄 SWING LOOP
 function rotateLoop() {
   let angle = Math.random() * 35;
 
