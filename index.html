@@ -9,23 +9,19 @@ html, body {
   padding: 0;
   background: black;
   overflow: hidden;
-  transition: filter 0.05s ease-in-out;
 }
 
-/* CENTER WRAP */
-#wrap {
+/* BACKGROUND LAYER (this will be inverted ONLY) */
+#bg {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
-/* HANGING IMAGE */
+/* HANGING IMAGE (NOT AFFECTED BY INVERT) */
 #img {
   width: 200px;
   margin-top: 10px;
@@ -34,7 +30,7 @@ html, body {
   transform: rotate(0deg);
 
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 /* JUMPSCARE IMAGE */
@@ -56,7 +52,10 @@ html, body {
 
 <body>
 
-<div id="wrap">
+<!-- BACKGROUND LAYER -->
+<div id="bg"></div>
+
+<div style="position:fixed; width:100%; display:flex; justify-content:center; z-index:10;">
   <img id="img" src="aa.png">
 </div>
 
@@ -67,6 +66,8 @@ html, body {
 <audio id="scareAudio" src="aas.mp3"></audio>
 
 <script>
+let bg = document.getElementById("bg");
+
 let img = document.getElementById("img");
 let scareImg = document.getElementById("scareImg");
 
@@ -88,13 +89,13 @@ img.addEventListener("click", () => {
   }
 });
 
-/* TRIGGER EVERY CLICK */
+/* TRIGGER */
 document.addEventListener("click", () => {
   if (!started || isScaring) return;
   triggerInvert();
 });
 
-/* ROTATION */
+/* ROTATE */
 function rotateLoop() {
   let angle = Math.random() * 35;
 
@@ -116,7 +117,7 @@ function rotateLoop() {
   }, 2000);
 }
 
-/* INVERT + JUMPSCARE */
+/* ONLY BACKGROUND INVERTS */
 function triggerInvert() {
   isScaring = true;
 
@@ -130,7 +131,7 @@ function triggerInvert() {
     if (i >= flashes) {
       clearInterval(interval);
 
-      document.body.style.filter = "none";
+      bg.style.filter = "none";
       scareImg.style.opacity = 0;
 
       isScaring = false;
@@ -138,10 +139,10 @@ function triggerInvert() {
     }
 
     if (i % 2 === 0) {
-      document.body.style.filter = "invert(1) contrast(2)";
+      bg.style.filter = "invert(1) contrast(2)";
       scareImg.style.opacity = 1;
     } else {
-      document.body.style.filter = "none";
+      bg.style.filter = "none";
       scareImg.style.opacity = 0;
     }
 
