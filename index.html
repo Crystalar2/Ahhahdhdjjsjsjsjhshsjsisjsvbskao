@@ -1,44 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 html, body {
   margin: 0;
-  padding: 0;
-  width: 100%;
   height: 100%;
   background: black;
   overflow: hidden;
 }
 
+/* text */
 .warning-bg {
   position: fixed;
   bottom: 10%;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 28px;
   color: gray;
-  opacity: 0.25;
-  letter-spacing: 3px;
-  font-family: Arial;
-  font-weight: bold;
-  pointer-events: none;
+  opacity: 0.3;
+  font-size: 24px;
 }
 
+/* picture */
 .pic {
   position: absolute;
   top: 0;
   left: 50%;
   width: 60vw;
   max-width: 300px;
-  transform-origin: 50% 0%;
+  transform-origin: top center;
   transform: translateX(-50%);
-  transition: transform 1.5s ease-in-out;
-  z-index: 2;
-  touch-action: manipulation;
+  transition: transform 1s;
 }
 
+/* jumpscare */
 .target {
   position: fixed;
   top: 0;
@@ -49,20 +44,17 @@ html, body {
   justify-content: center;
   align-items: center;
   opacity: 0;
-  z-index: 5;
 }
 
 #targetImg {
   width: 60vw;
   max-width: 300px;
-  transform: scale(0);
 }
 
-/* 💀 animation */
+/* animation */
 @keyframes jumpscare {
-  0% { transform: scale(0); opacity: 1; }
-  10% { transform: scale(5); }
-  100% { transform: scale(5); opacity: 0; }
+  from { transform: scale(0); }
+  to { transform: scale(5); }
 }
 </style>
 </head>
@@ -77,94 +69,48 @@ html, body {
   <img src="aa.jpeg" id="targetImg">
 </div>
 
-<audio id="scream" src="aas.mp3" preload="auto"></audio>
-<audio id="creak" src="aa.mp3" preload="auto"></audio>
-<audio id="bg" src="bgaa.mp3" preload="auto" loop></audio>
+<audio id="scream" src="aas.mp3"></audio>
+<audio id="creak" src="aa.mp3"></audio>
+<audio id="bg" src="bgaa.mp3" loop></audio>
 
 <script>
 const pic = document.getElementById("pic");
 const target = document.getElementById("target");
 const targetImg = document.getElementById("targetImg");
-const creak = document.getElementById("creak");
 const scream = document.getElementById("scream");
+const creak = document.getElementById("creak");
 const bg = document.getElementById("bg");
 
-let direction = 1;
-let currentAngle = 0;
 let started = false;
 let clickCount = 0;
 
-/* 🔓 unlock audio */
-function unlockAudio() {
-  [bg, creak, scream].forEach(a => {
-    a.muted = true;
-    a.play().then(() => {
-      a.pause();
-      a.currentTime = 0;
-      a.muted = false;
-    }).catch(()=>{});
-  });
-}
-
-/* 🪢 swing */
-function updatePic() {
-  pic.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
-}
-
-function swing() {
-  const angle = Math.random() * 34 + 1;
-  direction *= -1;
-  currentAngle = angle * direction;
-
-  const duration = Math.random() * 1500 + 1000;
-  pic.style.transitionDuration = duration + "ms";
-
-  updatePic();
-
-  bg.play().catch(()=>{});
-
-  creak.currentTime = 0;
-  creak.volume = 0.05;
-  creak.play().catch(()=>{});
-
-  setTimeout(swing, duration);
-}
-
-/* ▶ start */
-function startExperience() {
+/* START */
+document.body.addEventListener("pointerdown", () => {
   if (started) return;
   started = true;
 
-  unlockAudio();
-  swing();
-}
+  bg.play().catch(()=>{});
+});
 
-document.body.addEventListener("pointerdown", startExperience, { once: true });
+/* SWING */
+let angle = 0;
+setInterval(() => {
+  angle = -angle || 20;
+  pic.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+}, 1500);
 
-/* 👁 jumpscare FIXED */
-pic.addEventListener("pointerdown", (e) => {
-  e.stopPropagation(); // 🔥 prevent conflict
-
+/* CLICK IMAGE */
+pic.addEventListener("pointerdown", () => {
   clickCount++;
+
+  creak.currentTime = 0;
+  creak.play().catch(()=>{});
 
   if (clickCount === 3) {
     clickCount = 0;
 
-    creak.currentTime = 0;
-    creak.volume = 0.3;
-    creak.play().catch(()=>{});
-
     target.style.opacity = "1";
-
-    /* 🔥 FORCE animation restart (stable way) */
-    targetImg.style.animation = "none";
-    targetImg.style.transform = "scale(0)";
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        targetImg.style.animation = "jumpscare 0.7s linear";
-      });
-    });
+    targetImg.style.animation = "jumpscare 0.5s forwards";
 
     scream.currentTime = 0;
     scream.play().catch(()=>{});
@@ -172,15 +118,7 @@ pic.addEventListener("pointerdown", (e) => {
     setTimeout(() => {
       target.style.opacity = "0";
       targetImg.style.animation = "";
-      targetImg.style.transform = "scale(0)";
-    }, 700);
-  }
-});
-
-/* 🔁 keep audio alive */
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && started) {
-    bg.play().catch(()=>{});
+    }, 500);
   }
 });
 </script>
