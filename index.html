@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <style>
 html, body {
   margin: 0;
@@ -15,9 +15,9 @@ html, body {
 /* ⚠️ BACKGROUND WARNING TEXT */
 .warning-bg {
   position: fixed;
-  top: 100%;
+  bottom: 10%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 
   font-size: 28px;
   color: gray;
@@ -35,14 +35,16 @@ html, body {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 40vw;
-  max-width: 250px;
+  width: 60vw;
+  max-width: 300px;
 
   transform-origin: 50% 0%;
   transform: translateX(-50%);
   transition: transform 1.5s ease-in-out;
 
   z-index: 2;
+
+  touch-action: manipulation;
 }
 
 /* 👁 fullscreen center */
@@ -63,59 +65,28 @@ html, body {
   z-index: 5;
 }
 
+.target.active {
+  pointer-events: auto;
+}
+
 /* 👁 jumpscare image */
 #targetImg {
-  width: 40vw;
-  max-width: 250px;
+  width: 60vw;
+  max-width: 300px;
 
   transform: scale(0);
   opacity: 0;
-
-  transition: none;
 }
 
 /* 💀 jumpscare animation */
 @keyframes jumpscare {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-    filter: invert(0);
-  }
-
-  10% {
-    transform: scale(5);
-  }
-
+  0% { transform: scale(0); opacity: 1; filter: invert(0); }
+  10% { transform: scale(5); }
   20% { filter: invert(1); }
-  30% { filter: invert(0); }
-  40% { filter: invert(1); }
-  50% { filter: invert(0); }
+  40% { filter: invert(0); }
   60% { filter: invert(1); }
-  70% { filter: invert(0); }
-  80% { filter: invert(1); }
-
-  100% {
-    transform: scale(5);
-    opacity: 0;
-    filter: invert(0);
-  }
-}
-
-/* 💧 drops */
-.drop {
-  position: absolute;
-  width: 3px;
-  height: 10px;
-  background: white;
-  border-radius: 50%;
-  animation: fall linear forwards;
-}
-
-@keyframes fall {
-  to {
-    transform: translateY(100vh);
-    opacity: 0;
-  }
+  80% { filter: invert(0); }
+  100% { transform: scale(5); opacity: 0; }
 }
 </style>
 </head>
@@ -144,7 +115,21 @@ const bg = document.getElementById("bg");
 
 let direction = 1;
 let currentAngle = 0;
+let started = false;
 
+/* 🔓 unlock audio (MOBILE FIX) */
+function unlockAudio() {
+  [bg, creak, scream].forEach(a => {
+    a.muted = true;
+    a.play().then(() => {
+      a.pause();
+      a.currentTime = 0;
+      a.muted = false;
+    }).catch(()=>{});
+  });
+}
+
+/* 🪢 swing */
 function updatePic() {
   pic.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
 }
@@ -170,9 +155,22 @@ function swing() {
   setTimeout(swing, duration);
 }
 
+/* ▶ start (works on mobile + pc) */
+function startExperience() {
+  if (started) return;
+  started = true;
+
+  unlockAudio();
+  swing();
+}
+
+document.body.addEventListener("click", startExperience, { once: true });
+document.body.addEventListener("touchstart", startExperience, { once: true });
+
+/* 👁 jumpscare trigger */
 let clickCount = 0;
 
-pic.addEventListener("click", () => {
+function handleTap() {
   clickCount++;
 
   if (clickCount === 3) {
@@ -180,23 +178,25 @@ pic.addEventListener("click", () => {
 
     creak.currentTime = 0;
     creak.volume = 0.3;
-    creak.play();
+    creak.play().catch(()=>{});
 
+    target.classList.add("active");
     target.style.opacity = "1";
+
     targetImg.style.animation = "jumpscare 0.7s linear";
-    scream.play();
+    scream.play().catch(()=>{});
 
     setTimeout(() => {
       target.style.opacity = "0";
+      target.classList.remove("active");
       targetImg.style.animation = "";
       targetImg.style.transform = "scale(0)";
     }, 700);
   }
-});
+}
 
-document.body.addEventListener("click", () => {
-  swing();
-}, { once: true });
+pic.addEventListener("click", handleTap);
+pic.addEventListener("touchstart", handleTap);
 </script>
 
 </body>
