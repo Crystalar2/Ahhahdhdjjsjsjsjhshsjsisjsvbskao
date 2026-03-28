@@ -87,7 +87,7 @@
   <img src="aa.jpeg" id="targetImg" draggable="false">
 </div>
 
-<!-- Audio elements -->
+<!-- Audio -->
 <audio id="scream" src="aas.mp3" preload="auto"></audio>
 <audio id="creak" src="aa.mp3" preload="auto"></audio>
 <audio id="bg" src="bgaa.mp3" preload="auto" loop></audio>
@@ -103,29 +103,28 @@ const bg = document.getElementById("bg");
 let clickCount = 0;
 let started = false;
 
-// Function to play background music with a "Force" catch
-function playBackgroundMusic() {
+// CHECK IF FILE EXISTS (Debug Helper)
+bg.onerror = () => {
+  console.error("ERROR: The file 'bgaa.mp3' was not found or could not be loaded.");
+  alert("Audio file 'bgaa.mp3' not found! Check your filename and capitalization.");
+};
+
+function startAudioEngine() {
+  if (started) return;
+  started = true;
+  
+  // 1. Start Background Music (Force un-pause)
   bg.volume = 0.5;
-  // Some browsers need a "play" promise handled
-  const playPromise = bg.play();
+  bg.play().catch(e => console.log("BG blocked:", e));
 
-  if (playPromise !== undefined) {
-    playPromise.then(_ => {
-      console.log("BG Music started successfully");
-    }).catch(error => {
-      console.error("BG Music failed to start:", error);
-    });
-  }
+  // 2. Start Small Creak Loop
+  playSmallCreak();
+  setInterval(playSmallCreak, 2000);
 }
 
-function startCreakLoop() {
-  playCreak();
-  setInterval(playCreak, 2000);
-}
-
-function playCreak() {
+function playSmallCreak() {
   creak.currentTime = 0;
-  creak.volume = 0.3;
+  creak.volume = 0.1; // MADE SMALLER (10% volume)
   creak.play().catch(() => {});
 }
 
@@ -143,16 +142,12 @@ function triggerJumpscare() {
   }, 600);
 }
 
-// MAIN TRIGGER
+// CLICK TRIGGER
 pic.addEventListener("pointerdown", (e) => {
   e.preventDefault();
 
-  // First click starts the audio engine
-  if (!started) {
-    started = true;
-    playBackgroundMusic();
-    startCreakLoop();
-  }
+  // Initialize everything on first click of the ghost
+  startAudioEngine();
 
   clickCount++;
   if (clickCount >= 3) {
