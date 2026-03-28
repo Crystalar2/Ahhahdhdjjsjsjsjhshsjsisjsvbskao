@@ -12,73 +12,57 @@ html, body {
   overflow: hidden;
 }
 
-/* ⚠️ BACKGROUND WARNING TEXT */
+/* ⚠️ TEXT */
 .warning-bg {
   position: fixed;
   bottom: 10%;
   left: 50%;
   transform: translateX(-50%);
-
   font-size: 28px;
   color: gray;
   opacity: 0.25;
   letter-spacing: 3px;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   font-weight: bold;
-
-  z-index: 0;
   pointer-events: none;
 }
 
-/* 🪢 hanging picture */
+/* 🪢 picture */
 .pic {
   position: absolute;
   top: 0;
   left: 50%;
   width: 60vw;
   max-width: 300px;
-
   transform-origin: 50% 0%;
   transform: translateX(-50%);
   transition: transform 1.5s ease-in-out;
-
   z-index: 2;
-
   touch-action: manipulation;
 }
 
-/* 👁 fullscreen center */
+/* 👁 jumpscare */
 .target {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-
   opacity: 0;
-  pointer-events: none;
-
   z-index: 5;
 }
 
-.target.active {
-  pointer-events: auto;
-}
-
-/* 👁 jumpscare image */
+/* 👁 image */
 #targetImg {
   width: 60vw;
   max-width: 300px;
-
   transform: scale(0);
-  opacity: 0;
 }
 
-/* 💀 jumpscare animation */
+/* 💀 jumpscare anim */
 @keyframes jumpscare {
   0% { transform: scale(0); opacity: 1; filter: invert(0); }
   10% { transform: scale(5); }
@@ -87,6 +71,25 @@ html, body {
   60% { filter: invert(1); }
   80% { filter: invert(0); }
   100% { transform: scale(5); opacity: 0; }
+}
+
+/* 📳 SCREEN SHAKE */
+@keyframes shake {
+  0% { transform: translate(0,0); }
+  10% { transform: translate(-10px,5px); }
+  20% { transform: translate(10px,-5px); }
+  30% { transform: translate(-8px,8px); }
+  40% { transform: translate(8px,-8px); }
+  50% { transform: translate(-5px,5px); }
+  60% { transform: translate(5px,-5px); }
+  70% { transform: translate(-3px,3px); }
+  80% { transform: translate(3px,-3px); }
+  90% { transform: translate(-2px,2px); }
+  100% { transform: translate(0,0); }
+}
+
+.shake {
+  animation: shake 0.7s;
 }
 </style>
 </head>
@@ -116,8 +119,9 @@ const bg = document.getElementById("bg");
 let direction = 1;
 let currentAngle = 0;
 let started = false;
+let clickCount = 0;
 
-/* 🔓 unlock audio (MOBILE FIX) */
+/* 🔓 unlock audio */
 function unlockAudio() {
   [bg, creak, scream].forEach(a => {
     a.muted = true;
@@ -137,7 +141,6 @@ function updatePic() {
 function swing() {
   const angle = Math.random() * 34 + 1;
   direction *= -1;
-
   currentAngle = angle * direction;
 
   const duration = Math.random() * 1500 + 1000;
@@ -155,48 +158,78 @@ function swing() {
   setTimeout(swing, duration);
 }
 
-/* ▶ start (works on mobile + pc) */
+/* ▶ start */
 function startExperience() {
   if (started) return;
   started = true;
-
   unlockAudio();
   swing();
 }
 
-document.body.addEventListener("click", startExperience, { once: true });
-document.body.addEventListener("touchstart", startExperience, { once: true });
+/* tap fix */
+function addTapListener(el, fn) {
+  let tapped = false;
 
-/* 👁 jumpscare trigger */
-let clickCount = 0;
+  el.addEventListener("touchstart", (e) => {
+    tapped = true;
+    fn(e);
+  });
 
+  el.addEventListener("click", (e) => {
+    if (!tapped) fn(e);
+    tapped = false;
+  });
+}
+
+addTapListener(document.body, startExperience);
+
+/* 👁 jumpscare */
 function handleTap() {
   clickCount++;
 
   if (clickCount === 3) {
     clickCount = 0;
 
+    /* 📳 VIBRATE */
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 200]);
+    }
+
+    /* 📳 SCREEN SHAKE */
+    document.body.classList.add("shake");
+    setTimeout(() => {
+      document.body.classList.remove("shake");
+    }, 700);
+
     creak.currentTime = 0;
     creak.volume = 0.3;
     creak.play().catch(()=>{});
 
-    target.classList.add("active");
     target.style.opacity = "1";
 
+    /* 🔥 restart animation */
+    targetImg.style.animation = "none";
+    targetImg.offsetHeight;
     targetImg.style.animation = "jumpscare 0.7s linear";
+
     scream.play().catch(()=>{});
 
     setTimeout(() => {
       target.style.opacity = "0";
-      target.classList.remove("active");
       targetImg.style.animation = "";
       targetImg.style.transform = "scale(0)";
     }, 700);
   }
 }
 
-pic.addEventListener("click", handleTap);
-pic.addEventListener("touchstart", handleTap);
+addTapListener(pic, handleTap);
+
+/* fix audio after tab switch */
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && started) {
+    bg.play().catch(()=>{});
+  }
+});
 </script>
 
 </body>
