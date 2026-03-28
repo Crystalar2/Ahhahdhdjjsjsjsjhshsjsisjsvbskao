@@ -2,153 +2,92 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jumpscare</title>
 
 <style>
 html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
   background: black;
   overflow: hidden;
 }
 
-/* HANGING IMAGE (NOT AFFECTED) */
-#img {
-  width: 200px;
-  margin-top: 10px;
-
-  transform-origin: top center;
-  transform: rotate(0deg);
-
-  position: relative;
-  z-index: 2;
+/* trigger button */
+#btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 15px 25px;
+  font-size: 20px;
+  z-index: 10;
 }
 
-/* JUMPSCARE IMAGE */
+/* jumpscare image */
 #scareImg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-
-  opacity: 0;
-  pointer-events: none;
-  z-index: 999;
-
-  /* smooth effect */
-  transition: filter 0.05s ease-in-out;
-}
-#scareImg.shake {
-  animation: shake 0.05s infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 100%;
+  max-height: 100%;
+  display: none;
+  transform-origin: center;
 }
 
+/* shake animation ONLY for image */
 @keyframes shake {
-  0% { transform: translate(0px, 0px); }
-  25% { transform: translate(2px, -2px); }
-  50% { transform: translate(-2px, 2px); }
-  75% { transform: translate(2px, 2px); }
-  100% { transform: translate(-2px, -2px); }
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  25% { transform: translate(-52%, -48%) rotate(-2deg); }
+  50% { transform: translate(-48%, -52%) rotate(2deg); }
+  75% { transform: translate(-51%, -49%) rotate(-1deg); }
+  100% { transform: translate(-50%, -50%) rotate(0deg); }
+}
+
+.shake {
+  animation: shake 0.1s infinite;
+}
+
+/* invert ONLY image */
+.invert {
+  filter: invert(1);
 }
 </style>
-
 </head>
 
 <body>
 
-<div style="position:fixed; width:100%; display:flex; justify-content:center;">
-  <img id="img" src="aa.png">
-</div>
+<button id="btn">CLICK</button>
 
 <img id="scareImg" src="aa.jpeg">
 
-<audio id="bgAudio" src="bgaa.mp3" loop></audio>
-<audio id="rotateAudio" src="aa.mp3"></audio>
-<audio id="scareAudio" src="aas.mp3"></audio>
+<audio id="sound" src="aas.mp3"></audio>
 
 <script>
-let img = document.getElementById("img");
-let scareImg = document.getElementById("scareImg");
+const btn = document.getElementById("btn");
+const img = document.getElementById("scareImg");
+const sound = document.getElementById("sound");
 
-let bgAudio = document.getElementById("bgAudio");
-let rotateAudio = document.getElementById("rotateAudio");
-let scareAudio = document.getElementById("scareAudio");
+btn.onclick = () => {
+  img.style.display = "block";
 
-let started = false;
-let isScaring = false;
+  // restart sound every click
+  sound.currentTime = 0;
+  sound.play();
 
-rotateAudio.volume = 0.2;
+  // shake + invert ONLY image
+  img.classList.add("shake");
+  img.classList.add("invert");
 
-/* START */
-img.addEventListener("click", () => {
-  if (!started) {
-    started = true;
-    bgAudio.play().catch(()=>{});
-    rotateLoop();
-  }
-});
-
-/* TRIGGER */
-document.addEventListener("click", () => {
-  if (!started || isScaring) return;
-  triggerScare();
-});
-
-/* ROTATE */
-function rotateLoop() {
-  let angle = Math.random() * 35;
-
-  img.style.transition = "transform 2s ease-in-out";
-  img.style.transform = `rotate(-${angle}deg)`;
-
-  rotateAudio.currentTime = 0;
-  rotateAudio.play().catch(()=>{});
-
+  // reset after 1.5s
   setTimeout(() => {
-    let angle2 = Math.random() * 35;
-
-    img.style.transform = `rotate(${angle2}deg)`;
-
-    rotateAudio.currentTime = 0;
-    rotateAudio.play().catch(()=>{});
-
-    setTimeout(rotateLoop, 2000);
-  }, 2000);
-}
-
-/* ONLY aa.jpeg EFFECT */
-function triggerScare() {
-  isScaring = true;
-
-  let flashes = 10;
-  let i = 0;
-
-  scareAudio.currentTime = 0;
-  scareAudio.play().catch(()=>{});
-
-  scareImg.style.opacity = 1;
-
-  let interval = setInterval(() => {
-    if (i >= flashes) {
-      clearInterval(interval);
-
-      scareImg.style.opacity = 0;
-      scareImg.style.filter = "none";
-
-      isScaring = false;
-      return;
-    }
-
-    if (i % 2 === 0) {
-      // ONLY THE JUMPSCARE IMAGE INVERTS
-      scareImg.style.filter = "invert(1) contrast(2)";
-    } else {
-      scareImg.style.filter = "none";
-    }
-
-    i++;
-  }, 60);
-}
+    img.classList.remove("shake");
+    img.classList.remove("invert");
+    img.style.display = "none";
+  }, 1500);
+};
 </script>
 
 </body>
