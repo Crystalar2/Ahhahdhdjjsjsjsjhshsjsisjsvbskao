@@ -61,43 +61,43 @@ html, body {
   <img id="img" src="aa.png">
 </div>
 
-<!-- FLASH IMAGE -->
 <img id="flashImg" src="aa.jpeg">
 
 <audio id="bgAudio" src="bgaa.mp3" loop></audio>
 <audio id="rotateAudio" src="aa.mp3"></audio>
+<audio id="scareAudio" src="aas.mp3"></audio>
 
 <script>
 let img = document.getElementById("img");
 let bgAudio = document.getElementById("bgAudio");
 let rotateAudio = document.getElementById("rotateAudio");
 let flashImg = document.getElementById("flashImg");
+let scareAudio = document.getElementById("scareAudio");
 
 let started = false;
-let clickCount = 0;
+let triggered = false;
 
 // 🔊 softer creak
 rotateAudio.volume = 0.2;
 
-// 🎯 FIRST CLICK (start game)
+// 🎯 FIRST CLICK (start swing + bg audio)
 img.addEventListener("click", () => {
   if (!started) {
     started = true;
+
     bgAudio.play().catch(()=>{});
     rotateLoop();
   }
 });
 
-// 🖱️ CLICK ANYWHERE → COUNT TO 3
+// ⚡ CLICK ANYWHERE ONCE → TRIGGER FLASH (ONLY ONCE)
 document.addEventListener("click", () => {
-  clickCount++;
+  if (!started) return;
+  if (triggered) return;
 
-  if (clickCount === 3) {
-    triggerFlash();
-    clickCount = 0; // reset
-  }
+  triggered = true;
+  triggerFlash();
 });
-
 
 // 🔄 SWING LOOP
 function rotateLoop() {
@@ -122,11 +122,14 @@ function rotateLoop() {
   }, 2000);
 }
 
-
-// ⚡ FLASH + INVERT EFFECT
+// ⚡ FLASH + SOUND
 function triggerFlash() {
   let flashes = 6;
   let i = 0;
+
+  // 🔊 play scare sound once
+  scareAudio.currentTime = 0;
+  scareAudio.play().catch(()=>{});
 
   let interval = setInterval(() => {
     if (i >= flashes) {
@@ -139,7 +142,7 @@ function triggerFlash() {
 
     if (i % 2 === 0) {
       flashImg.style.opacity = 1;
-      document.body.style.filter = "invert(1)";
+      document.body.style.filter = "invert(1) brightness(2)";
     } else {
       flashImg.style.opacity = 0;
       document.body.style.filter = "none";
